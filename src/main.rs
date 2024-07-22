@@ -1,6 +1,10 @@
+use std::fs;
+use std::fs::{read_to_string};
+use std::path::Path;
 use device_query::{DeviceQuery, DeviceState, MouseState};
 use std::time::Duration;
 use rodio::{source::SineWave, OutputStream, Sink, Source};
+use copy_dir::copy_dir;
 
 fn main() {
     let device_state = DeviceState::new();
@@ -8,6 +12,20 @@ fn main() {
     let mut is_drawing = false;
     let mut start_position = (0, 0);
     let mut end_position: (i32, i32);
+
+    let mut options: Vec<&str> = Vec::new();
+
+    //Leggo il file di configurazione per capire il percorso sorgente, il percorso destinazione e il tipo di backup.
+    //Se il file di configurazione è assente o è vuoto, devo configurare il programma
+    let content: Vec<String> = read_to_string("configuration.txt").unwrap().lines().map(String::from).collect();
+    //TODO: se il file non esiste?
+    if content.len() == 2 {
+        options = content[1].split(";").collect();
+    }
+    else {
+        //TODO: configurare il programma
+    }
+
 
     //Vettore di 4 elementi che rappresentano i lati di un rettangolo. Se il primo elemento è V (lato verticale), il secondo deve essere H (lato orizzontale), poi V e infine H. Altrimenti, si potrebbe avere H, V, H, V
     let mut sides: Vec<char> = Vec::with_capacity(4);
@@ -70,6 +88,20 @@ fn main() {
 
                                     //Riproduco un suono di conferma anche in questo caso
                                     play_sound();
+
+                                    if options[0] == "F" {
+                                        //Effettuo il backup di una cartella. Per prima cosa, elimino la cartella di destinazione (la funzione copy_dir ritorna errore se la cartella di destinazione esiste), e successivamente copio il contenuto della cartella sorgente in quella di destinazione
+                                        if Path::new(options[2]).exists() {
+                                            fs::remove_dir_all(options[2]).expect("Non sono riuscito a rimuovere la cartella");
+
+                                            println!("Cartella rimossa");
+                                        }
+                                        copy_dir(options[1], options[2]).expect("Backup fallito");
+                                        println!("Backup completo");
+                                    }
+                                    else {
+                                        //TODO: capire quali sono i tipi di backup
+                                    }
                                 }
                             }
                         }
