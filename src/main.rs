@@ -3,11 +3,13 @@ use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
 use device_query::{DeviceQuery, DeviceState, MouseState};
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use rodio::{source::SineWave, OutputStream, Sink, Source};
 use copy_dir::copy_dir;
 use sysinfo::System;
 use chrono;
+use cpu_time::ProcessTime;
+use fs_extra::dir::get_size;
 
 fn main() {
     let device_state = DeviceState::new();
@@ -122,8 +124,14 @@ fn main() {
 
                                             println!("Cartella rimossa");
                                         }
+                                        let start_backup = ProcessTime::try_now().expect("Non sono riuscito ad ottenere il tempo del backup");
                                         copy_dir(options[1], options[2]).expect("Backup fallito");
+                                        let cpu_time: Duration = start_backup.try_elapsed().expect("Non sono riuscito ad ottenere il tempo del backup");
                                         println!("Backup completo");
+
+                                        let mut backup_log = File::create(options[2].to_owned() + "/backup_log.txt").unwrap();
+                                        backup_log.write((get_size(options[2]).unwrap().to_string() + " bytes\n").as_bytes()).expect("Scrittura file fallita");
+                                        backup_log.write((cpu_time.as_millis().to_string() + " millis\n").as_bytes()).expect("Scrittura file fallita");
                                     }
                                     else {
                                         //TODO: capire quali sono i tipi di backup

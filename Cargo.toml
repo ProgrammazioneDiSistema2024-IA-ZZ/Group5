@@ -17,3 +17,7 @@ copy_dir = "0.1.3"
 sysinfo = "0.30.13"
 
 chrono = "0.4.38"
+
+cpu-time = "1.0.0"
+
+fs_extra = "1.3.0"
