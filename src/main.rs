@@ -1,10 +1,13 @@
-use std::fs;
-use std::fs::{read_to_string};
+use std::{fs, thread};
+use std::fs::{File, read_to_string};
+use std::io::Write;
 use std::path::Path;
 use device_query::{DeviceQuery, DeviceState, MouseState};
 use std::time::Duration;
 use rodio::{source::SineWave, OutputStream, Sink, Source};
 use copy_dir::copy_dir;
+use sysinfo::System;
+use chrono;
 
 fn main() {
     let device_state = DeviceState::new();
@@ -15,12 +18,34 @@ fn main() {
 
     let mut options: Vec<&str> = Vec::new();
 
+    //Thread che si occupa di effettuare il log del consumo di CPU ogni 2 minuti. Il log viene salvato in un file "log.txt" nella stessa cartella del progetto, e i dati della CPU vengono presi tramite il crate sysinfo.
+    //Al primo log il consumo di CPU è sempre 100%
+    let mut sys = System::new();
+    thread::spawn(move || {
+        let mut log_file = File::create("log.txt").unwrap();
+        loop {
+            sys.refresh_cpu();                  //Aggiorna le informazioni della CPU. Serve per avere dati aggiornati
+            log_file.write(chrono::offset::Local::now().to_string().as_bytes()).expect("Scrittura log fallita");
+            log_file.write("\n".as_bytes()).expect("Scrittura log fallita");
+            for i in 0..sys.cpus().len() {
+                log_file.write(("CPU ".to_owned() + &*i.to_string() + ": " + &*sys.cpus()[i].cpu_usage().to_string() + "%\n").as_bytes()).expect("Scrittura log fallita");
+            }
+            log_file.write("\n".as_bytes()).expect("Scrittura log fallita");
+            thread::sleep(Duration::from_secs(120));
+        }
+    });
+
     //Leggo il file di configurazione per capire il percorso sorgente, il percorso destinazione e il tipo di backup.
     //Se il file di configurazione è assente o è vuoto, devo configurare il programma
-    let content: Vec<String> = read_to_string("configuration.txt").unwrap().lines().map(String::from).collect();
-    //TODO: se il file non esiste?
-    if content.len() == 2 {
-        options = content[1].split(";").collect();
+    let content: Vec<String>;
+    if Path::new("configuration.txt").exists() {
+        content = read_to_string("configuration.txt").unwrap().lines().map(String::from).collect();
+        if content.len() == 2 {
+            options = content[1].split(";").collect();
+        }
+        else {
+            //TODO: configurare il programma
+        }
     }
     else {
         //TODO: configurare il programma
@@ -33,6 +58,7 @@ fn main() {
     let mut sound_played = false;
 
     loop {
+        //TODO: capire se questo sia il modo più CPU-friendly per controllare il movimento del cursore
         let mouse: MouseState = device_state.get_mouse();
         let position = mouse.coords;
 
