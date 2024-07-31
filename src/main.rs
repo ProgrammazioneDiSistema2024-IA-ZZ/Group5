@@ -3,7 +3,7 @@ use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
 use device_query::{DeviceQuery, DeviceState, MouseState};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration};
 use rodio::{source::SineWave, OutputStream, Sink, Source};
 use copy_dir::copy_dir;
 use sysinfo::System;
