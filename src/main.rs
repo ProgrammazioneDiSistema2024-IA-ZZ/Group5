@@ -80,7 +80,7 @@ fn main() {
                 //In questo modo, c'è meno rischio che venga disegnato un rettangolo "accidentalmente", durante le normali operazioni al PC.
 
                 if sides.len() == 0 {
-                    if is_vertical(start_position, end_position) {
+                    if is_vertical(start_position, end_position) {      //&& (end_position.1 - start_position.1).abs() > 90% of monitor height
                         sides.push('V');
                     }
                     else {
@@ -117,6 +117,8 @@ fn main() {
                                     //Riproduco un suono di conferma anche in questo caso
                                     play_sound();
 
+                                    sides.clear();
+
                                     if options[0] == "F" {
                                         //Effettuo il backup di una cartella. Per prima cosa, elimino la cartella di destinazione (la funzione copy_dir ritorna errore se la cartella di destinazione esiste), e successivamente copio il contenuto della cartella sorgente in quella di destinazione
                                         if Path::new(options[2]).exists() {
@@ -140,8 +142,9 @@ fn main() {
                             }
                         }
                     }
-                    else {  //Non ho né una linea orizzontale né una verticale, quindi resetto il vettore
-                        sides = Vec::with_capacity(4);
+                    else {
+                        //Non ho né una linea orizzontale né una verticale (oppure ho due linee orizzontali/verticali consecutive), quindi resetto il vettore
+                        sides.clear();
                     }
                 }
             }
