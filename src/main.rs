@@ -10,6 +10,7 @@ use sysinfo::System;
 use chrono;
 use cpu_time::ProcessTime;
 use fs_extra::dir::get_size;
+use rdev::{display_size};
 
 fn main() {
     let device_state = DeviceState::new();
@@ -21,7 +22,7 @@ fn main() {
     let mut options: Vec<&str> = Vec::new();
 
     //Thread che si occupa di effettuare il log del consumo di CPU ogni 2 minuti. Il log viene salvato in un file "log.txt" nella stessa cartella del progetto, e i dati della CPU vengono presi tramite il crate sysinfo.
-    //Al primo log il consumo di CPU è sempre 100%
+    //Su Windows, al primo log il consumo di CPU è sempre 100%
     let mut sys = System::new();
     thread::spawn(move || {
         let mut log_file = File::create("log.txt").unwrap();
@@ -59,6 +60,12 @@ fn main() {
     //Questa variabile indica se ho già riprodotto il beep di conferma del primo dei due comandi
     let mut sound_played = false;
 
+    //Prendo le dimensini dello schermo (larghezza e altezza). Mi servono per verificare che il rettangolo sia disegnato lungo i bordi dello schermo
+    let (w_temp, h_temp) = display_size().unwrap();
+    //Converto le dimensioni dello schermo da u64 a f64
+    let w = w_temp as f64;
+    let h = h_temp as f64;
+
     loop {
         //TODO: capire se questo sia il modo più CPU-friendly per controllare il movimento del cursore
         let mouse: MouseState = device_state.get_mouse();
@@ -80,17 +87,18 @@ fn main() {
                 //In questo modo, c'è meno rischio che venga disegnato un rettangolo "accidentalmente", durante le normali operazioni al PC.
 
                 if sides.len() == 0 {
-                    if is_vertical(start_position, end_position) {      //&& (end_position.1 - start_position.1).abs() > 90% of monitor height
+                    //Il secondo controllo mi serve per capire se il rettangolo sia stato tracciato per almeno il 90% della lunghezza/altezza dello schermo
+                    if is_vertical(start_position, end_position) && f64::from((end_position.1 - start_position.1).abs()) > 0.9*h {
                         sides.push('V');
                     }
                     else {
-                        if is_horizontal(start_position, end_position) {
+                        if is_horizontal(start_position, end_position) && f64::from((end_position.0 - start_position.0).abs()) > 0.9*w {
                             sides.push('H');
                         }
                     }
                 }
                 else {
-                    if (sides[sides.len() - 1] == 'V' && is_horizontal(start_position, end_position)) || (sides[sides.len() - 1] == 'H' && is_vertical(start_position, end_position) || sound_played) {
+                    if (sides[sides.len() - 1] == 'V' && (is_horizontal(start_position, end_position) && f64::from((end_position.0 - start_position.0).abs()) > 0.9*w)) || (sides[sides.len() - 1] == 'H' && (is_vertical(start_position, end_position) && f64::from((end_position.1 - start_position.1).abs()) > 0.9*h)) || sound_played {
                         if is_horizontal(start_position, end_position) && sides.len() < 4 {
                             sides.push('H');
                         }
@@ -119,36 +127,44 @@ fn main() {
 
                                     sides.clear();
 
-                                    if options[0] == "F" {
-                                        //Effettuo il backup di una cartella. Per prima cosa, elimino la cartella di destinazione (la funzione copy_dir ritorna errore se la cartella di destinazione esiste), e successivamente copio il contenuto della cartella sorgente in quella di destinazione
-                                        if Path::new(options[2]).exists() {
-                                            fs::remove_dir_all(options[2]).expect("Non sono riuscito a rimuovere la cartella");
+                                    if Path::new(options[1]).exists() {
+                                        if options[0] == "F" {
+                                            //Effettuo il backup di una cartella. Per prima cosa, elimino la cartella di destinazione (la funzione copy_dir ritorna errore se la cartella di destinazione esiste), e successivamente copio il contenuto della cartella sorgente in quella di destinazione
+                                            if Path::new(options[2]).exists() {
+                                                fs::remove_dir_all(options[2]).expect("Non sono riuscito a rimuovere la cartella");
 
-                                            println!("Cartella rimossa");
+                                                println!("Cartella rimossa");
+                                            }
+                                            let start_backup = ProcessTime::try_now().expect("Non sono riuscito ad ottenere il tempo del backup");
+                                            copy_dir(options[1], options[2]).expect("Backup fallito");
+                                            let cpu_time: Duration = start_backup.try_elapsed().expect("Non sono riuscito ad ottenere il tempo del backup");
+                                            println!("Backup completo");
+
+                                            let mut backup_log = File::create(options[2].to_owned() + "/backup_log.txt").unwrap();
+                                            backup_log.write((get_size(options[2]).unwrap().to_string() + " bytes\n").as_bytes()).expect("Scrittura file fallita");
+                                            backup_log.write((cpu_time.as_millis().to_string() + " millis\n").as_bytes()).expect("Scrittura file fallita");
+                                        } else {
+                                            //TODO: capire quali sono i tipi di backup
                                         }
-                                        let start_backup = ProcessTime::try_now().expect("Non sono riuscito ad ottenere il tempo del backup");
-                                        copy_dir(options[1], options[2]).expect("Backup fallito");
-                                        let cpu_time: Duration = start_backup.try_elapsed().expect("Non sono riuscito ad ottenere il tempo del backup");
-                                        println!("Backup completo");
-
-                                        let mut backup_log = File::create(options[2].to_owned() + "/backup_log.txt").unwrap();
-                                        backup_log.write((get_size(options[2]).unwrap().to_string() + " bytes\n").as_bytes()).expect("Scrittura file fallita");
-                                        backup_log.write((cpu_time.as_millis().to_string() + " millis\n").as_bytes()).expect("Scrittura file fallita");
                                     }
                                     else {
-                                        //TODO: capire quali sono i tipi di backup
+                                        //Il percorso di sorgente non esiste, ritorno un errore
+                                        println!("Errore: il percorso di sorgente non esiste. Backup fallito");
                                     }
                                 }
                             }
                         }
                     }
                     else {
-                        //Non ho né una linea orizzontale né una verticale (oppure ho due linee orizzontali/verticali consecutive), quindi resetto il vettore
+                        //Non ho né una linea orizzontale né una verticale (oppure ho due linee orizzontali/verticali consecutive, oppure ho una linea non lunga tanto quanto lo schermo), quindi resetto il vettore
                         sides.clear();
                     }
                 }
             }
         }
+
+        //Per ridurre il consumo di CPU, faccio una sleep di 50ms durante il loop
+        thread::sleep(Duration::from_millis(50));
     }
 }
 
