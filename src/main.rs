@@ -1,7 +1,8 @@
-use std::{fs, thread};
+use std::{fs, io, thread};
 use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
+use std::str::Split;
 use device_query::{DeviceQuery, DeviceState, MouseState};
 use std::time::{Duration};
 use rodio::{source::SineWave, OutputStream, Sink, Source};
@@ -10,6 +11,7 @@ use sysinfo::System;
 use chrono;
 use cpu_time::ProcessTime;
 use fs_extra::dir::get_size;
+use glob::glob;
 use rdev::{display_size};
 
 fn main() {
@@ -67,7 +69,6 @@ fn main() {
     let h = h_temp as f64;
 
     loop {
-        //TODO: capire se questo sia il modo più CPU-friendly per controllare il movimento del cursore
         let mouse: MouseState = device_state.get_mouse();
         let position = mouse.coords;
 
@@ -128,24 +129,31 @@ fn main() {
                                     sides.clear();
 
                                     if Path::new(options[1]).exists() {
-                                        if options[0] == "F" {
-                                            //Effettuo il backup di una cartella. Per prima cosa, elimino la cartella di destinazione (la funzione copy_dir ritorna errore se la cartella di destinazione esiste), e successivamente copio il contenuto della cartella sorgente in quella di destinazione
-                                            if Path::new(options[2]).exists() {
-                                                fs::remove_dir_all(options[2]).expect("Non sono riuscito a rimuovere la cartella");
+                                        //Effettuo il backup. Per prima cosa, elimino la cartella di destinazione (la funzione copy_dir ritorna errore se la cartella di destinazione esiste)
+                                        if Path::new(options[2]).exists() {
+                                            fs::remove_dir_all(options[2]).expect("Non sono riuscito a rimuovere la cartella");
 
-                                                println!("Cartella rimossa");
-                                            }
-                                            let start_backup = ProcessTime::try_now().expect("Non sono riuscito ad ottenere il tempo del backup");
-                                            copy_dir(options[1], options[2]).expect("Backup fallito");
-                                            let cpu_time: Duration = start_backup.try_elapsed().expect("Non sono riuscito ad ottenere il tempo del backup");
-                                            println!("Backup completo");
-
-                                            let mut backup_log = File::create(options[2].to_owned() + "/backup_log.txt").unwrap();
-                                            backup_log.write((get_size(options[2]).unwrap().to_string() + " bytes\n").as_bytes()).expect("Scrittura file fallita");
-                                            backup_log.write((cpu_time.as_millis().to_string() + " millis\n").as_bytes()).expect("Scrittura file fallita");
-                                        } else {
-                                            //TODO: capire quali sono i tipi di backup
+                                            println!("Cartella rimossa");
                                         }
+                                        let start_backup = ProcessTime::try_now().expect("Non sono riuscito ad ottenere il tempo del backup");
+
+                                        if options[0] == "F" {
+                                            //Effettuo il backup di un'intera cartella
+                                            copy_dir(options[1], options[2]).expect("Backup fallito");
+                                        } else {
+                                            //In options[0] ho un elenco di tipi di file separati da virgola (,). Li estraggo e li inserisco in un vettore. Poi, richiamo la funzione copy_files che effettua il backup di tali file
+                                            let ext: Vec<&str> = options[0].split(',').collect();
+                                            if let Err(e) = copy_files(options[1], options[2], &ext) {
+                                                eprintln!("Error copying files: {}", e);
+                                            }
+                                        }
+
+                                        let cpu_time: Duration = start_backup.try_elapsed().expect("Non sono riuscito ad ottenere il tempo del backup");
+                                        println!("Backup completo");
+
+                                        let mut backup_log = File::create(options[2].to_owned() + "/backup_log.txt").unwrap();
+                                        backup_log.write((get_size(options[2]).unwrap().to_string() + " bytes\n").as_bytes()).expect("Scrittura file fallita");
+                                        backup_log.write((cpu_time.as_millis().to_string() + " millis\n").as_bytes()).expect("Scrittura file fallita");
                                     }
                                     else {
                                         //Il percorso di sorgente non esiste, ritorno un errore
@@ -187,4 +195,32 @@ fn play_sound() {
     //Sleep mentre il suono viene riprodotto
     std::thread::sleep(Duration::from_secs(1));
     sink.sleep_until_end();
+}
+
+fn copy_files(src: &str, dest: &str, extensions: &[&str]) -> io::Result<()> {
+    fs::create_dir_all(dest)?;
+
+    for ext in extensions {
+        //Tramite Glob, trovo i file con l'estensione desiderata nella cartella sorgente
+        let pattern = format!("{}/**/*.{}", src, ext);
+
+        //Itero i file trovati, e li copio nella cartella di destinazione
+        for entry in glob(&pattern).expect("Failed to read glob pattern") {
+            match entry {
+                Ok(path) => {
+                    if path.is_file() {
+                        //TODO: Durante la copia, non viene mantenuto il percorso di cartelle originale, ma i file vengono tutti copiati nella cartella radice
+                        let file_name = path.file_name().unwrap();
+                        let dest_path = Path::new(dest).join(file_name);
+
+                        fs::copy(&path, &dest_path)?;
+                        println!("Copied {:?} to {:?}", path, dest_path);
+                    }
+                }
+                Err(e) => println!("{:?}", e),
+            }
+        }
+    }
+
+    Ok(())
 }

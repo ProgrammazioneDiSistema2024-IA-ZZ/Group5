@@ -1,2 +1,2 @@
 type;source;destination
-F;F:\Paolo\Pictures\Screenshots;E:/backup
+png,json;/Users/paolocagliero/Desktop/exam-1-Paolino01;/Users/paolocagliero/Desktop/backup
