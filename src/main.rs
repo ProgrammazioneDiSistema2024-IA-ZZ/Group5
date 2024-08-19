@@ -1,8 +1,8 @@
-use std::{fs, io, thread};
+use std::{env, fs, io, thread};
+use auto_launch::{AutoLaunch, AutoLaunchBuilder};
 use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
-use std::str::Split;
 use device_query::{DeviceQuery, DeviceState, MouseState};
 use std::time::{Duration};
 use rodio::{source::SineWave, OutputStream, Sink, Source};
@@ -15,6 +15,41 @@ use glob::glob;
 use rdev::{display_size};
 
 fn main() {
+    let exe = env::current_exe().unwrap();
+    let wd = exe.parent().unwrap();
+    let app_path = wd.join("Group5");
+
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let auto = AutoLaunchBuilder::new()
+            .set_app_name("Group13")
+            .set_app_path(&app_path.to_str().unwrap())
+            //.set_use_launch_agent(false)
+            .build()
+            .unwrap();
+
+
+        auto.enable().unwrap();
+        println!("Autostart enabled: {}", auto.is_enabled().unwrap());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let _ = AutoLaunchBuilder::new()
+            .set_app_name("Group13")
+            .set_app_path(&app_path.to_str().unwrap())
+            .set_use_launch_agent(false)
+            .build()
+            .unwrap().enable();
+
+        Command::new("osascript")
+            .arg("-e")
+            .arg("tell application \"Terminal\" to set visible of front window to false")
+            .output()
+            .expect("Failed to hide terminal");
+    }
+
     let device_state = DeviceState::new();
 
     let mut is_drawing = false;
@@ -68,6 +103,8 @@ fn main() {
     let w = w_temp as f64;
     let h = h_temp as f64;
 
+    println!("{} {}", w, h);
+
     loop {
         let mouse: MouseState = device_state.get_mouse();
         let position = mouse.coords;
@@ -85,7 +122,8 @@ fn main() {
                 println!("Finished drawing. Start: {:?}, End: {:?}", start_position, end_position);
 
                 //L'utente schiaccia il tasto sinistro del mouse e disegna un lato del rettangolo. Rilascia il tasto, lo schiaccia di nuovo e disegna il secondo lato del rettangolo. Così via fino a che il rettangolo non è completo
-                //In questo modo, c'è meno rischio che venga disegnato un rettangolo "accidentalmente", durante le normali operazioni al PC.
+                //In questo modo, c'è meno rischio che venga disegnato un rettangolo "accidentalmente" durante le normali operazioni al PC.
+                //Il rettangolo deve essere disegnato lungo i bordi dello schermo. In caso di più monitor, si fa riferimento a quello impostato come principale
 
                 if sides.len() == 0 {
                     //Il secondo controllo mi serve per capire se il rettangolo sia stato tracciato per almeno il 90% della lunghezza/altezza dello schermo
