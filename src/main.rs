@@ -1,3 +1,4 @@
+slint::include_modules!();
 use std::{env, fs, io, thread};
 use auto_launch::{AutoLaunch, AutoLaunchBuilder};
 use std::fs::{File, read_to_string};
@@ -14,10 +15,12 @@ use fs_extra::dir::get_size;
 use glob::glob;
 use rdev::{display_size};
 
-fn main() {
+fn main() -> Result<(), slint::PlatformError> {
+
     let exe = env::current_exe().unwrap();
     let wd = exe.parent().unwrap();
     let app_path = wd.join("Group5");
+    let ui = AppWindow::new()?;
 
 
     #[cfg(not(target_os = "macos"))]
@@ -49,6 +52,55 @@ fn main() {
             .output()
             .expect("Failed to hide terminal");
     }
+    // Gestione dei callback
+    ui.on_request_increase_value({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.set_counter(ui.get_counter() + 1);
+        }
+    });
+
+    ui.on_request_decrease_value({
+        let ui_handle2 = ui.as_weak();
+        move || {
+            let ui = ui_handle2.unwrap();
+            ui.set_counter(ui.get_counter() - 1);
+        }
+    });
+
+    ui.on_save_button_clicked({
+        let ui_handle3 = ui.as_weak();
+        move || {
+            if let Some(ui) = ui_handle3.upgrade() { // la necessità di fare l'upgrade era necessria per aver
+                // il diritto di deallocare  uno spazio di memoria
+                ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
+               // inizio_backup();
+                start_backup();
+            }
+        }
+    });
+    ui.on_quit_button_clicked({
+        let ui_handle3 = ui.as_weak();
+        move || {
+            if let Some(ui) = ui_handle3.upgrade() {
+                ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
+            }
+        }
+    });
+
+    ui.run()
+
+
+
+}
+
+
+
+
+
+
+fn start_backup(){
 
     let device_state = DeviceState::new();
 
@@ -212,7 +264,11 @@ fn main() {
         //Per ridurre il consumo di CPU, faccio una sleep di 50ms durante il loop
         thread::sleep(Duration::from_millis(50));
     }
+
+
+
 }
+
 
 fn is_vertical(start: (i32, i32), end: (i32, i32)) -> bool {
     start.0 >= end.0-50 && start.0 <= end.0+50

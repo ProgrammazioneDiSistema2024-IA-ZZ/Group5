@@ -26,3 +26,9 @@ rdev = "0.5.3"
 glob = "0.3.1"
 
 auto-launch = "0.5.0"
+
+
+slint = "1.6"
+
+[build-dependencies]
+slint-build = "1.6"

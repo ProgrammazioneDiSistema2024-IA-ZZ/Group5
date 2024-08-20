@@ -1,0 +1,104 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+import { LineEdit } from "std-widgets.slint";
+import { StandardButton, VerticalBox } from "std-widgets.slint";
+import { CheckBox } from "std-widgets.slint";
+import { GroupBox, HorizontalBox } from "std-widgets.slint";
+import { GridBox } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    in-out property <int> counter: 42;
+    callback request-increase-value();
+    callback request-decrease-value();
+    callback quit_button_clicked();
+    callback save_button_clicked();
+
+
+    VerticalBox {
+
+        GridLayout {
+            Row{
+               Text { text: "Source Backup:"; vertical-alignment: center; horizontal-alignment: right; }
+               HorizontalLayout {
+                    colspan: 3;
+                    LineEdit {
+                                input-type: password;
+                                horizontal_stretch: 1;
+                    }
+                    /*
+                    le_manifest := LineEdit {
+                                    enabled: !root.deptree-pane-visible;
+                                    accepted => { root.reload-manifest(le_manifest.text); }
+                                    horizontal_stretch: 1;
+                                }
+                    */
+                    Button {
+                         text: "📂";
+                           // clicked => { root.show-open-dialog(); }
+                            clicked => {  }
+                    }
+
+
+               }
+            }
+            Row{
+                Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: right; }
+                               HorizontalLayout {
+                                    colspan: 3;
+                                    LineEdit {
+                                                input-type: password;
+                                                horizontal_stretch: 1;
+                                    }
+                                    /*
+                                    le_manifest := LineEdit {
+                                                    enabled: !root.deptree-pane-visible;
+                                                    accepted => { root.reload-manifest(le_manifest.text); }
+                                                    horizontal_stretch: 1;
+                                                }
+                                    */
+                                    Button {
+                                         text: "📂";
+                                           // clicked => { root.show-open-dialog(); }
+                                            clicked => {  }
+                                    }
+
+
+                               }
+            }
+        padding-top: 46px /* header line height in design */
+                             + /* extra top-padding in design */ 27px;
+        spacing: 24px;
+
+        Text {
+                text: ("Choose Settings");
+
+         }
+
+        }
+        GroupBox {
+                title: "A Nice Title";
+                CheckBox { text: "Hello World";}
+                CheckBox { text: "Hello World";}
+                CheckBox { text: "Hello World";}
+                CheckBox { text: "Hello World";}
+        }
+
+        HorizontalBox {
+                alignment: space_between;
+                Button {
+                    text: "Abort";
+                    clicked => {
+                        root.quit_button_clicked();
+                    }
+                }
+                Button {
+                    text: "Save";
+                    clicked => {
+                        root.save_button_clicked(); // Collegato al nuovo callback
+                    }
+                }
+        }
+
+
+
+    }
+}
