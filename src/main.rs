@@ -17,17 +17,21 @@ use rdev::{display_size};
 
 fn main() -> Result<(), slint::PlatformError> {
 
-    let exe = env::current_exe().unwrap();
-    let wd = exe.parent().unwrap();
+    /*
+Queste due righe vengono utilizzate per ottenere il percorso
+dell'eseguibile corrente e il percorso della directory che lo contiene
+*/
+    let exe = env::current_exe().unwrap(); // exe contiene il percorso completo dell'eseguibile corrente
+    let wd = exe.parent().unwrap(); //wd contiene il percorso della directory che contiene l'eseguibile corrente
     let app_path = wd.join("Group5");
     let ui = AppWindow::new()?;
 
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(target_os = "macos"))] //questo codice sarà eseguito solo su Windows e Linux
     {
         let auto = AutoLaunchBuilder::new()
-            .set_app_name("Group13")
-            .set_app_path(&app_path.to_str().unwrap())
+            .set_app_name("Group5")
+            .set_app_path(&app_path.to_str().unwrap()) //Imposta il percorso dell'applicazione che deve essere avviata automaticamente
             //.set_use_launch_agent(false)
             .build()
             .unwrap();
@@ -37,14 +41,15 @@ fn main() -> Result<(), slint::PlatformError> {
         println!("Autostart enabled: {}", auto.is_enabled().unwrap());
     }
 
-    #[cfg(target_os = "macos")]
+    #[cfg(target_os = "macos")] //questo codice sarà eseguito solo su macos
     {
         let _ = AutoLaunchBuilder::new()
-            .set_app_name("Group13")
+            .set_app_name("Group5")
             .set_app_path(&app_path.to_str().unwrap())
-            .set_use_launch_agent(false)
+            .set_use_launch_agent(false) //non utilizza un "launch agent" per l'avvio automatico
             .build()
             .unwrap().enable();
+        //per nascondere la finestra frontale dell'applicazione Terminale, rendendola invisibile all'utente
 
         Command::new("osascript")
             .arg("-e")
