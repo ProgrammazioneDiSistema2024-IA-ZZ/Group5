@@ -126,6 +126,12 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    err_mess.window().on_close_requested({
+        move || {
+            exit(1);
+        }
+    });
+
     confirm_mess.on_annulla_button_clicked({    //Quando clicco su annulla, in automatico viene annullato il backup, siccome sto inserendo un comando diverso da quello di conferma
         let ui_handle = confirm_mess.as_weak();
         move || {
@@ -173,7 +179,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             MainThreadMessage::CloseConfirmMessage => {
                 println!("Chiuditi");
                 let ui_handle = confirm_mess.as_weak();
-                move || {
+                let _ = move || {
                     if let Some(confirm_mess) = ui_handle.upgrade() {
                         confirm_mess.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
                     }
@@ -199,10 +205,13 @@ fn start_backup(tx: mpsc::Sender<MainThreadMessage>) {
     //Se il file di configurazione è assente o è vuoto, devo configurare il programma
     std::thread::spawn(move || {
         //Thread che si occupa di effettuare il log del consumo di CPU ogni 2 minuti. Il log viene salvato in un file "log.txt" nella stessa cartella del progetto, e i dati della CPU vengono presi tramite il crate sysinfo.
-        //Su Windows, al primo log il consumo di CPU è sempre 100%
         let mut sys = System::new();
         thread::spawn(move || {
             let mut log_file = File::create("log.txt").unwrap();
+
+            sys.refresh_cpu();  //Senza questo refresh e la relativa sleep, al primo log il consumo di CPU sarebbe sempre 100%
+            thread::sleep(Duration::from_secs(10));
+
             loop {
                 sys.refresh_cpu();                  //Aggiorna le informazioni della CPU. Serve per avere dati aggiornati
                 log_file.write(chrono::offset::Local::now().to_string().as_bytes()).expect("Scrittura log fallita");
@@ -223,7 +232,7 @@ fn start_backup(tx: mpsc::Sender<MainThreadMessage>) {
         if Path::new("configuration.txt").exists() {
             content = read_to_string("configuration.txt").unwrap().lines().map(String::from).collect();
             if content.len() == 2 {
-                let mut options: Vec<&str> = Vec::new();
+                let options: Vec<&str>;
                 options = content[1].split(";").collect();
 
                 //Prendo le dimensini dello schermo (larghezza e altezza). Mi servono per verificare che il rettangolo sia disegnato lungo i bordi dello schermo
@@ -388,7 +397,7 @@ fn copy_files(src: &str, dest: &str, extensions: &[&str]) -> io::Result<()> {
             match entry {
                 Ok(path) => {
                     if path.is_file() {
-                        //TODO: Durante la copia, non viene mantenuto il percorso di cartelle originale, ma i file vengono tutti copiati nella cartella radice
+                        //TODO: Durante la copia, non viene mantenuto il percorso di cartelle originale, ma i file vengono tutti copiati nella cartella radice -> da discutere: è un bug o una feature?
                         let file_name = path.file_name().unwrap();
                         let dest_path = Path::new(dest).join(file_name);
 
