@@ -102,3 +102,99 @@ export component AppWindow inherits Window {
 
     }
 }
+
+export component ErrorMessage inherits Window {
+    callback exit_button_clicked();
+
+    VerticalBox {
+        Text {
+            text: "Errore: il file di configurazione non è stato trovato o è errato. L'applicazione verrà terminata";
+            font-size: 15px;
+        }
+
+        spacing: 24px;
+
+        HorizontalLayout {
+            alignment: center;
+            Button {
+                text: "Esci";
+                width: 100px;
+                clicked => {
+                    root.exit_button_clicked();
+                }
+            }
+        }
+    }
+}
+
+export component ConfirmMessage inherits Window {
+    callback annulla_button_clicked();
+
+    VerticalBox {
+        Text {
+            text: "Primo comando riconosciuto correttamente. Per continuare con il backup, inserire il comando di conferma";
+            font-size: 15px;
+        }
+
+        spacing: 24px;
+
+        HorizontalLayout {
+            alignment: center;
+            Button {
+                text: "Annulla backup";
+                width: 100px;
+                clicked => {
+                    root.annulla_button_clicked();
+                }
+            }
+        }
+    }
+}
+
+export component BackupCompletedMessage inherits Window {
+    callback chiudi_button_clicked();
+
+    VerticalBox {
+        Text {
+            text: "Backup eseguito correttamente";
+            font-size: 15px;
+        }
+
+        spacing: 24px;
+
+        HorizontalLayout {
+            alignment: center;
+            Button {
+                text: "Chiudi";
+                width: 100px;
+                clicked => {
+                    root.chiudi_button_clicked();
+                }
+            }
+        }
+    }
+}
+
+export component BackupErrorMessage inherits Window {
+    callback chiudi_button_clicked();
+
+    VerticalBox {
+        Text {
+            text: "Si sono verificati problemi durante il backup e non è stato possibile completarlo";
+            font-size: 15px;
+        }
+
+        spacing: 24px;
+
+        HorizontalLayout {
+            alignment: center;
+            Button {
+                text: "Chiudi";
+                width: 100px;
+                clicked => {
+                    root.chiudi_button_clicked();
+                }
+            }
+        }
+    }
+}
