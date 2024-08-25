@@ -1,3 +1,6 @@
+//Nasconde la console del terminale in Windows
+#![windows_subsystem = "windows"]
+
 slint::include_modules!();
 use std::{env, fs, io, thread};
 use auto_launch::{AutoLaunchBuilder};
@@ -51,7 +54,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         let auto = AutoLaunchBuilder::new()
             .set_app_name("Group5")
             .set_app_path(&app_path.to_str().unwrap())  //Imposta il percorso dell'applicazione che deve essere avviata automaticamente
-            .set_use_launch_agent(false)                //per nascondere la finestra frontale dell'applicazione Terminale, rendendola invisibile all'utente
+            .set_use_launch_agent(false)
             .build()
             .unwrap();
 
@@ -159,7 +162,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
-
     let res = ui.run();
 
     for received in rx {
@@ -189,7 +191,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     }
 
     res
-
 }
 
 
