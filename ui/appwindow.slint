@@ -1,27 +1,36 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 import { LineEdit } from "std-widgets.slint";
-import { StandardButton, VerticalBox } from "std-widgets.slint";
-import { CheckBox } from "std-widgets.slint";
+import { StandardButton } from "std-widgets.slint";
+import { CheckBox,ComboBox } from "std-widgets.slint";
 import { GroupBox, HorizontalBox } from "std-widgets.slint";
 import { GridBox } from "std-widgets.slint";
 
+
 export component AppWindow inherits Window {
     in-out property <int> counter: 42;
-    callback request-increase-value();
-    callback request-decrease-value();
+    in property <bool> widgets-enabled: true;
+    in-out property <string> selected_backup_mode: "Automatic";
+    in-out property <[string]> file_formats: [];
+    in-out property <string> file_format_input: "";
+    in-out property <string> formatted_file_formats: "";
+
+
     callback quit_button_clicked();
     callback save_button_clicked();
+    callback add_file_formats();
+
 
 
     VerticalBox {
 
         GridLayout {
+        spacing: 24px;
             Row{
-               Text { text: "Source Backup:"; vertical-alignment: center; horizontal-alignment: right; }
+               Text { text: "Source Backup:"; vertical-alignment: center ; horizontal-alignment: left; }
                HorizontalLayout {
                     colspan: 3;
                     LineEdit {
-                                input-type: password;
+                               input-type: password;
                                 horizontal_stretch: 1;
                     }
                     /*
@@ -41,7 +50,7 @@ export component AppWindow inherits Window {
                }
             }
             Row{
-                Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: right; }
+                Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: left; }
                                HorizontalLayout {
                                     colspan: 3;
                                     LineEdit {
@@ -64,23 +73,49 @@ export component AppWindow inherits Window {
 
                                }
             }
+            Row{
+                        Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
+                        HorizontalLayout {
+                            ComboBox {
+                                model: ["Automatic", "Manual"];
+                                current-value <=> root.selected_backup_mode;
+                                enabled: widgets-enabled;
+                            }
+
+                            LineEdit {
+                                visible: root.selected_backup_mode == "Manual";
+                                placeholder-text: "Type file(es: .pdf)";
+                                horizontal_stretch: 1;
+                                text <=> root.file_format_input;
+                            }
+                            Button {
+                                visible: root.selected_backup_mode == "Manual";
+                                text: "➕ Add";
+                                clicked => {
+                                    if (root.file_format_input != "") {
+                                        root.add_file_formats();
+                                        root.file_format_input = "";
+                                    }
+                                }
+                            }
+                        }
+                    }
+            Row {
+                Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; }
+
+            }
+
+
+
+
+
+            }
+
         padding-top: 46px /* header line height in design */
                              + /* extra top-padding in design */ 27px;
         spacing: 24px;
 
-        Text {
-                text: ("Choose Settings");
 
-         }
-
-        }
-        GroupBox {
-                title: "A Nice Title";
-                CheckBox { text: "Hello World";}
-                CheckBox { text: "Hello World";}
-                CheckBox { text: "Hello World";}
-                CheckBox { text: "Hello World";}
-        }
 
         HorizontalBox {
                 alignment: space_between;

@@ -19,6 +19,7 @@ use cpu_time::ProcessTime;
 use fs_extra::dir::get_size;
 use glob::glob;
 use rdev::{display_size};
+use slint::{ModelRc, SharedString};
 
 enum MainThreadMessage {
     ShowErrorMessage,
@@ -45,6 +46,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     let confirm_mess = ConfirmMessage::new()?;
     let backup_compl_mess = BackupCompletedMessage::new()?;
     let backup_err_mess = BackupErrorMessage::new()?;
+    let mut file_formats: Vec<String> = vec![];
 
     let (tx, rx) = std::sync::mpsc::channel();
 
@@ -81,21 +83,25 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     }
 
     // Gestione dei callback
-    ui.on_request_increase_value({
+    ui.on_add_file_formats({
         let ui_handle = ui.as_weak();
         move || {
-            let ui = ui_handle.unwrap();
-            ui.set_counter(ui.get_counter() + 1);
+            if let Some(ui) = ui_handle.upgrade() {
+                let new_format = ui.get_file_format_input().to_string();
+
+                if !new_format.is_empty() && !file_formats.contains(&new_format) {
+                    file_formats.push(new_format.clone());
+
+                    // Converti Vec<String> in Vec<SharedString>
+                    let shared_formats: Vec<SharedString> = file_formats.iter().map(SharedString::from).collect();
+
+
+                }
+            }
         }
     });
 
-    ui.on_request_decrease_value({
-        let ui_handle2 = ui.as_weak();
-        move || {
-            let ui = ui_handle2.unwrap();
-            ui.set_counter(ui.get_counter() - 1);
-        }
-    });
+
 
     ui.on_save_button_clicked({
         let ui_handle3 = ui.as_weak();
