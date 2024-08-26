@@ -11,6 +11,7 @@ use std::path::Path;
 use std::process::exit;
 use std::rc::Rc;
 use std::sync::mpsc;
+use std::sync::mpsc::Sender;
 use device_query::{DeviceQuery, DeviceState, MouseState};
 use std::time::{Duration};
 use rodio::{source::SineWave, OutputStream, Sink, Source};
@@ -26,12 +27,11 @@ use slint::{ModelRc, SharedString};
 enum MainThreadMessage {
     ShowErrorMessage,
     ShowConfirmMessage,
-    CloseConfirmMessage,
     ShowBackupCompleteMessage,
     ShowBackupErrorMessage
 }
 
-fn main() -> Result<(), slint::PlatformError> {
+fn main() {
 
     /*
 Queste due righe vengono utilizzate per ottenere il percorso
@@ -43,14 +43,15 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
 
 
     //Inizializzo le schermate della GUI di cui ho bisogno
-    let ui = AppWindow::new()?;
-    let err_mess = ErrorMessage::new()?;
-    let confirm_mess = ConfirmMessage::new()?;
-    let backup_compl_mess = BackupCompletedMessage::new()?;
-    let backup_err_mess = BackupErrorMessage::new()?;
+    let ui = AppWindow::new().unwrap();
+    let err_mess = ErrorMessage::new().unwrap();
+    let confirm_mess = ConfirmMessage::new().unwrap();
+    let backup_compl_mess = BackupCompletedMessage::new().unwrap();
+    let backup_err_mess = BackupErrorMessage::new().unwrap();
     let file_formats: Rc<RefCell<Vec<String>>> = Rc::new(RefCell::new(Vec::new())); //Dichiaro file_formats come Rc così che possa essere condiviso tra più closure
 
-    let (tx, rx) = std::sync::mpsc::channel();
+    let (tx, rx) = mpsc::channel();
+    let (tx_close, rx_close) = mpsc::channel();
 
 
     #[cfg(not(target_os = "macos"))] //questo codice sarà eseguito solo su Windows e Linux
@@ -113,7 +114,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
                 let formats = convert_file_formats(file_formats.borrow());
                 println!("{}", formats);
                // inizio_backup();
-                start_backup(tx.clone());
+                start_backup(tx.clone(), tx_close.clone());
             }
         }
     });
@@ -145,7 +146,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
-    confirm_mess.on_annulla_button_clicked({    //Quando clicco su annulla, in automatico viene annullato il backup, siccome sto inserendo un comando diverso da quello di conferma
+    confirm_mess.on_abort_button_clicked({    //Quando clicco su annulla, in automatico viene annullato il backup, siccome sto inserendo un comando diverso da quello di conferma
         let ui_handle = confirm_mess.as_weak();
         move || {
             if let Some(confirm_mess) = ui_handle.upgrade() {
@@ -154,7 +155,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
-    backup_compl_mess.on_chiudi_button_clicked({
+    backup_compl_mess.on_close_button_clicked({
         let ui_handle = backup_compl_mess.as_weak();
         move || {
             if let Some(backup_compl_mess) = ui_handle.upgrade() {
@@ -163,7 +164,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
-    backup_err_mess.on_chiudi_button_clicked({
+    backup_err_mess.on_close_button_clicked({
         let ui_handle = backup_err_mess.as_weak();
         move || {
             if let Some(backup_err_mess) = ui_handle.upgrade() {
@@ -172,35 +173,40 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    let confirm_mess_weak = confirm_mess.as_weak();
+    thread::spawn(move || {
+        rx_close.recv().unwrap();
+
+        let confirm_mess_weak = confirm_mess_weak.clone();
+        slint::invoke_from_event_loop({
+            move || {
+                if let Some(window) = confirm_mess_weak.upgrade() {
+                    window.hide().expect("Impossibile nascondere la finestra");
+                }
+            }
+        }).unwrap();
+    });
+
     let res = ui.run();
 
-    for received in rx {
-        match received {
-            MainThreadMessage::ShowErrorMessage => {
-                let _ = err_mess.run();
-            }
-            MainThreadMessage::ShowConfirmMessage => {
-                let _ = confirm_mess.run();
-            }
-            MainThreadMessage::ShowBackupCompleteMessage => {
-                let _ = backup_compl_mess.run();
-            }
-            MainThreadMessage::ShowBackupErrorMessage => {
-                let _ = backup_err_mess.run();
-            }
-            MainThreadMessage::CloseConfirmMessage => {
-                println!("Chiuditi");
-                let ui_handle = confirm_mess.as_weak();
-                let _ = move || {
-                    if let Some(confirm_mess) = ui_handle.upgrade() {
-                        confirm_mess.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
-                    }
-                };
+    loop {
+        if let Ok(msg) = rx.recv() {
+            match msg {
+                MainThreadMessage::ShowErrorMessage => {
+                    err_mess.run();
+                }
+                MainThreadMessage::ShowConfirmMessage => {
+                    confirm_mess.run();
+                }
+                MainThreadMessage::ShowBackupCompleteMessage => {
+                    backup_compl_mess.run();
+                }
+                MainThreadMessage::ShowBackupErrorMessage => {
+                    backup_err_mess.run();
+                }
             }
         }
     }
-
-    res
 }
 
 
@@ -219,7 +225,7 @@ fn convert_file_formats(file_formats: Ref<Vec<String>>) -> String {
 }
 
 
-fn start_backup(tx: mpsc::Sender<MainThreadMessage>) {
+fn start_backup(tx: Sender<MainThreadMessage>, tx_close: Sender<()>) {
     let device_state = DeviceState::new();
 
     //Vettore di 4 elementi che rappresentano i lati di un rettangolo. Se il primo elemento è V (lato verticale), il secondo deve essere H (lato orizzontale), poi V e infine H. Altrimenti, si potrebbe avere H, V, H, V
@@ -325,7 +331,7 @@ fn start_backup(tx: mpsc::Sender<MainThreadMessage>) {
                                                 play_sound();
 
                                                 //Chiudo eventuali finestre aperte
-                                                tx.send(MainThreadMessage::CloseConfirmMessage).unwrap();   //TODO: non funziona
+                                                tx_close.send(()).unwrap();
 
                                                 sides.clear();
                                                 sound_played = false;
