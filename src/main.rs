@@ -1,13 +1,15 @@
 //Nasconde la console del terminale in Windows
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
 slint::include_modules!();
 use std::{env, fs, io, thread};
+use std::cell::{Ref, RefCell};
 use auto_launch::{AutoLaunchBuilder};
 use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
 use std::process::exit;
+use std::rc::Rc;
 use std::sync::mpsc;
 use device_query::{DeviceQuery, DeviceState, MouseState};
 use std::time::{Duration};
@@ -19,6 +21,7 @@ use cpu_time::ProcessTime;
 use fs_extra::dir::get_size;
 use glob::glob;
 use rdev::{display_size};
+use slint::{ModelRc, SharedString};
 
 enum MainThreadMessage {
     ShowErrorMessage,
@@ -45,6 +48,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     let confirm_mess = ConfirmMessage::new()?;
     let backup_compl_mess = BackupCompletedMessage::new()?;
     let backup_err_mess = BackupErrorMessage::new()?;
+    let file_formats: Rc<RefCell<Vec<String>>> = Rc::new(RefCell::new(Vec::new())); //Dichiaro file_formats come Rc così che possa essere condiviso tra più closure
 
     let (tx, rx) = std::sync::mpsc::channel();
 
@@ -81,21 +85,24 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     }
 
     // Gestione dei callback
-    ui.on_request_increase_value({
+    ui.on_add_file_formats({
         let ui_handle = ui.as_weak();
+        let file_formats = Rc::clone(&file_formats);    //Creo un riferimento a file_formats. In questo modo, posso modificarlo all'interno della closure subito sotto e averlo disponibile anche nella closure di on_save_button_clicked
         move || {
-            let ui = ui_handle.unwrap();
-            ui.set_counter(ui.get_counter() + 1);
+            if let Some(ui) = ui_handle.upgrade() {
+                let new_format = ui.get_file_format_input().to_string();
+
+                if !new_format.is_empty() && !file_formats.borrow().contains(&new_format) {
+                    file_formats.borrow_mut().push(new_format.clone());
+
+                    // Converti Vec<String> in Vec<SharedString>
+                    let shared_formats: Vec<SharedString> = file_formats.borrow().iter().map(SharedString::from).collect();
+                }
+            }
         }
     });
 
-    ui.on_request_decrease_value({
-        let ui_handle2 = ui.as_weak();
-        move || {
-            let ui = ui_handle2.unwrap();
-            ui.set_counter(ui.get_counter() - 1);
-        }
-    });
+
 
     ui.on_save_button_clicked({
         let ui_handle3 = ui.as_weak();
@@ -103,6 +110,8 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             if let Some(ui) = ui_handle3.upgrade() { // la necessità di fare l'upgrade era necessria per aver
                 // il diritto di deallocare  uno spazio di memoria
                 ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
+                let formats = convert_file_formats(file_formats.borrow());
+                println!("{}", formats);
                // inizio_backup();
                 start_backup(tx.clone());
             }
@@ -113,6 +122,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         move || {
             if let Some(ui) = ui_handle3.upgrade() {
                 ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
+                //TODO: quando si schiaccia su abort il programma rimane in esecuzione (se non è voluto, basta mettere exit(0); al posto di questo commento)
             }
         }
     });
@@ -191,6 +201,21 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     }
 
     res
+}
+
+
+//Funzione che prende come input un vettore di formati dei file e li converte in una stringa di tipo "formato1,formato2,..."
+fn convert_file_formats(file_formats: Ref<Vec<String>>) -> String {
+    let mut formats: String = String::from("");
+    for (i, f) in file_formats.iter().enumerate() {
+        for c in f.chars() {
+            formats.push(c);
+        }
+        if i != file_formats.len()-1 {
+            formats.push(',');
+        }
+    }
+    formats
 }
 
 
