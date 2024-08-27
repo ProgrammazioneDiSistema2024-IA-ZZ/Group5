@@ -97,8 +97,9 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
                 if !new_format.is_empty() && !file_formats.borrow().contains(&new_format) {
                     file_formats.borrow_mut().push(new_format.clone());
 
-                    // Converti Vec<String> in Vec<SharedString>
-                    let shared_formats: Vec<SharedString> = file_formats.borrow().iter().map(SharedString::from).collect();
+                    let formats = convert_file_formats(file_formats.borrow());
+
+                    ui.set_formatted_file_formats(SharedString::from(formats));
                 }
             }
         }
@@ -132,9 +133,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             if let Some(ui) = ui_handle3.upgrade() { // la necessità di fare l'upgrade era necessria per aver
                 // il diritto di deallocare  uno spazio di memoria
                 ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
-                let formats = convert_file_formats(file_formats.borrow());
-                println!("{}", formats);
-               // inizio_backup();
                 start_backup(tx.clone(), tx_close.clone());
             }
         }
@@ -148,7 +146,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             }
         }
     });
-
 
     //Gestisco gli eventi delle GUI
     err_mess.on_exit_button_clicked({

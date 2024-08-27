@@ -9,7 +9,7 @@ import { GridBox } from "std-widgets.slint";
 export component AppWindow inherits Window {
     in-out property <int> counter: 42;
     in property <bool> widgets-enabled: true;
-    in-out property <string> selected_backup_mode: "Automatic";
+    in-out property <string> selected_backup_mode: "Folder";
     in-out property <[string]> file_formats: [];
     in-out property <string> file_format_input: "";
     in-out property <string> formatted_file_formats: "";
@@ -36,13 +36,7 @@ export component AppWindow inherits Window {
                         horizontal-stretch: 1;
                         read-only: true;
                     }
-                    /*
-                    le_manifest := LineEdit {
-                                    enabled: !root.deptree-pane-visible;
-                                    accepted => { root.reload-manifest(le_manifest.text); }
-                                    horizontal_stretch: 1;
-                                }
-                    */
+
                     Button {
                         text: "📂";
                         clicked => { select_source_folder_clicked() }
@@ -59,49 +53,49 @@ export component AppWindow inherits Window {
                         horizontal-stretch: 1;
                         read-only: true;
                     }
-                    /*
-                    le_manifest := LineEdit {
-                                    enabled: !root.deptree-pane-visible;
-                                    accepted => { root.reload-manifest(le_manifest.text); }
-                                    horizontal_stretch: 1;
-                                }
-                    */
+
                     Button {
                         text: "📂";
                         clicked => { select_destination_folder_clicked() }
                     }
                 }
             }
-            Row{
-                        Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
-                        HorizontalLayout {
-                            ComboBox {
-                                model: ["Automatic", "Manual"];
-                                current-value <=> root.selected_backup_mode;
-                                enabled: widgets-enabled;
-                            }
 
-                            LineEdit {
-                                visible: root.selected_backup_mode == "Manual";
-                                placeholder-text: "Type file(es: pdf)";
-                                horizontal_stretch: 1;
-                                text <=> root.file_format_input;
-                            }
-                            Button {
-                                visible: root.selected_backup_mode == "Manual";
-                                text: "➕ Add";
-                                clicked => {
-                                    if (root.file_format_input != "") {
-                                        root.add_file_formats();
-                                        root.file_format_input = "";
-                                    }
-                                }
+            Row{
+                Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
+                HorizontalLayout {
+                    ComboBox {
+                        model: ["Folder", "Single files"];
+                        current-value <=> root.selected_backup_mode;
+                        enabled: widgets-enabled;
+                    }
+
+                    LineEdit {
+                        visible: root.selected_backup_mode == "Single files";
+                        placeholder-text: "Type file (es: pdf)";
+                        horizontal_stretch: 1;
+                        text <=> root.file_format_input;
+                    }
+                    Button {
+                        visible: root.selected_backup_mode == "Single files";
+                        text: "➕ Add";
+                        clicked => {
+                            if (root.file_format_input != "") {
+                                root.add_file_formats();
+                                root.file_format_input = "";
                             }
                         }
                     }
+                }
+            }
             Row {
                 Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; }
-
+                HorizontalLayout {
+                    Text {
+                        text: formatted_file_formats;
+                        font-size: 14px;
+                    }
+                }
             }
         }
 
