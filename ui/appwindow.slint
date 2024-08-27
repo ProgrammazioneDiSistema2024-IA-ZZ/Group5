@@ -15,12 +15,14 @@ export component AppWindow inherits Window {
     in-out property <string> formatted_file_formats: "";
     in-out property <string> source_folder: "";
     in-out property <string> destination_folder: "";
+    in-out property <bool> change: false ;
 
     callback quit_button_clicked();
     callback save_button_clicked();
     callback add_file_formats();
     callback select_source_folder_clicked();
     callback select_destination_folder_clicked();
+    callback folder_selected();
 
     VerticalBox {
 
@@ -68,6 +70,12 @@ export component AppWindow inherits Window {
                         model: ["Folder", "Single files"];
                         current-value <=> root.selected_backup_mode;
                         enabled: widgets-enabled;
+                        selected => { if(root.selected_backup_mode == "Folder"){
+
+                            root.folder_selected();
+                            root.file_formats= [];
+                            formatted_file_formats= ""
+                        }}
                     }
 
                     LineEdit {
@@ -75,12 +83,14 @@ export component AppWindow inherits Window {
                         placeholder-text: "Type file (es: pdf)";
                         horizontal_stretch: 1;
                         text <=> root.file_format_input;
+
                     }
                     Button {
                         visible: root.selected_backup_mode == "Single files";
                         text: "➕ Add";
                         clicked => {
                             if (root.file_format_input != "") {
+
                                 root.add_file_formats();
                                 root.file_format_input = "";
                             }

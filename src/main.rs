@@ -133,6 +133,20 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             }
         }
     });
+    ui.on_folder_selected({
+        let ui_handle = ui.as_weak();
+        let file_formats = Rc::clone(&file_formats);    //Creo un riferimento a file_formats. In questo modo, posso modificarlo all'interno della closure subito sotto e averlo disponibile anche nella closure di on_save_button_clicked
+
+        move || {
+            if let Some(ui) = ui_handle.upgrade() {
+                // Resetta file_formats e aggiorna l'interfaccia utente
+
+
+                file_formats.borrow_mut().clear();
+                ui.set_formatted_file_formats(SharedString::from("")); // Pulire la visualizzazione dei formati
+            }
+        }
+    });
 
     ui.on_save_button_clicked({
         let ui_handle3 = ui.as_weak();
