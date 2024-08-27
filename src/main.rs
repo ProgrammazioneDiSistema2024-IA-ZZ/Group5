@@ -23,6 +23,7 @@ use fs_extra::dir::get_size;
 use glob::glob;
 use rdev::{display_size};
 use slint::{ModelRc, SharedString};
+use rfd::FileDialog;
 
 enum MainThreadMessage {
     ShowErrorMessage,
@@ -103,7 +104,27 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    ui.on_select_source_folder_clicked( {
+        let ui_handle = ui.as_weak();
+        move || {
+            if let Some(folder_path) = FileDialog::new().pick_folder() {
+                if let Some(ui) = ui_handle.upgrade() {
+                    ui.set_source_folder(SharedString::from(folder_path.display().to_string()));
+                }
+            }
+        }
+    });
 
+    ui.on_select_destination_folder_clicked( {
+        let ui_handle = ui.as_weak();
+        move || {
+            if let Some(folder_path) = FileDialog::new().pick_folder() {
+                if let Some(ui) = ui_handle.upgrade() {
+                    ui.set_destination_folder(SharedString::from(folder_path.display().to_string()));
+                }
+            }
+        }
+    });
 
     ui.on_save_button_clicked({
         let ui_handle3 = ui.as_weak();

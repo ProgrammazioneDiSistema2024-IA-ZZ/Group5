@@ -13,13 +13,14 @@ export component AppWindow inherits Window {
     in-out property <[string]> file_formats: [];
     in-out property <string> file_format_input: "";
     in-out property <string> formatted_file_formats: "";
-
+    in-out property <string> source_folder: "";
+    in-out property <string> destination_folder: "";
 
     callback quit_button_clicked();
     callback save_button_clicked();
     callback add_file_formats();
-
-
+    callback select_source_folder_clicked();
+    callback select_destination_folder_clicked();
 
     VerticalBox {
 
@@ -30,8 +31,10 @@ export component AppWindow inherits Window {
                HorizontalLayout {
                     colspan: 3;
                     LineEdit {
-                               input-type: password;
-                                horizontal_stretch: 1;
+                        input-type: text;
+                        text: source_folder;
+                        horizontal-stretch: 1;
+                        read-only: true;
                     }
                     /*
                     le_manifest := LineEdit {
@@ -41,37 +44,33 @@ export component AppWindow inherits Window {
                                 }
                     */
                     Button {
-                         text: "📂";
-                           // clicked => { root.show-open-dialog(); }
-                            clicked => {  }
+                        text: "📂";
+                        clicked => { select_source_folder_clicked() }
                     }
-
-
                }
             }
             Row{
                 Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: left; }
-                               HorizontalLayout {
-                                    colspan: 3;
-                                    LineEdit {
-                                                input-type: password;
-                                                horizontal_stretch: 1;
-                                    }
-                                    /*
-                                    le_manifest := LineEdit {
-                                                    enabled: !root.deptree-pane-visible;
-                                                    accepted => { root.reload-manifest(le_manifest.text); }
-                                                    horizontal_stretch: 1;
-                                                }
-                                    */
-                                    Button {
-                                         text: "📂";
-                                           // clicked => { root.show-open-dialog(); }
-                                            clicked => {  }
-                                    }
-
-
-                               }
+                HorizontalLayout {
+                    colspan: 3;
+                    LineEdit {
+                        input-type: text;
+                        text: destination_folder;
+                        horizontal-stretch: 1;
+                        read-only: true;
+                    }
+                    /*
+                    le_manifest := LineEdit {
+                                    enabled: !root.deptree-pane-visible;
+                                    accepted => { root.reload-manifest(le_manifest.text); }
+                                    horizontal_stretch: 1;
+                                }
+                    */
+                    Button {
+                        text: "📂";
+                        clicked => { select_destination_folder_clicked() }
+                    }
+                }
             }
             Row{
                         Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
@@ -104,18 +103,11 @@ export component AppWindow inherits Window {
                 Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; }
 
             }
-
-
-
-
-
-            }
+        }
 
         padding-top: 46px /* header line height in design */
                              + /* extra top-padding in design */ 27px;
         spacing: 24px;
-
-
 
         HorizontalBox {
                 alignment: space_between;
