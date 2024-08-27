@@ -8,7 +8,7 @@ use auto_launch::{AutoLaunchBuilder};
 use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
-use std::process::exit;
+use std::process::{exit, Command};
 use std::rc::Rc;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
@@ -187,22 +187,22 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }).unwrap();
     });
 
-    let res = ui.run();
+    let _ = ui.run();
 
     loop {
         if let Ok(msg) = rx.recv() {
             match msg {
                 MainThreadMessage::ShowErrorMessage => {
-                    err_mess.run();
+                    let _ = err_mess.run();
                 }
                 MainThreadMessage::ShowConfirmMessage => {
-                    confirm_mess.run();
+                    let _ = confirm_mess.run();
                 }
                 MainThreadMessage::ShowBackupCompleteMessage => {
-                    backup_compl_mess.run();
+                    let _ = backup_compl_mess.run();
                 }
                 MainThreadMessage::ShowBackupErrorMessage => {
-                    backup_err_mess.run();
+                    let _ = backup_err_mess.run();
                 }
             }
         }
