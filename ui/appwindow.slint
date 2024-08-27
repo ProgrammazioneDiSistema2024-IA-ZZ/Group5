@@ -74,7 +74,7 @@ export component AppWindow inherits Window {
 
                             root.folder_selected();
                             root.file_formats= [];
-                            formatted_file_formats= ""
+                            formatted_file_formats= "";
                         }}
                     }
 
@@ -101,10 +101,24 @@ export component AppWindow inherits Window {
             Row {
                 Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; }
                 HorizontalLayout {
+                    horizontal-stretch: 1;
                     Text {
                         text: formatted_file_formats;
                         font-size: 14px;
                     }
+                    HorizontalLayout { // Contenitore aggiuntivo per allineare a destra
+                                             // Allinea il contenuto a destra
+                                            Button {
+                                                visible: root.selected_backup_mode == "Single files";
+                                                text: "🗑️ Delete";
+                                                width: 100px; // Imposta la larghezza del pulsante
+                                                clicked => {
+                                                    root.folder_selected();
+                                                    root.file_formats= [];
+                                                    formatted_file_formats= "";
+                                                }
+                                            }
+                                        }
                 }
             }
         }

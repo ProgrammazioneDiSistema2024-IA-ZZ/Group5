@@ -1,2 +1,2 @@
 type;source;destination
-pptx,txt;C:\Users\alega\Desktop\bau;C:\Users\alega\Desktop\ciao
+png;C:\Users\alega\Desktop\bau;C:\Users\alega\Desktop\ciao
