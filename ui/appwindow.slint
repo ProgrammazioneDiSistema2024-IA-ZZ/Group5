@@ -9,17 +9,20 @@ import { GridBox } from "std-widgets.slint";
 export component AppWindow inherits Window {
     in-out property <int> counter: 42;
     in property <bool> widgets-enabled: true;
-    in-out property <string> selected_backup_mode: "Automatic";
+    in-out property <string> selected_backup_mode: "Folder";
     in-out property <[string]> file_formats: [];
     in-out property <string> file_format_input: "";
     in-out property <string> formatted_file_formats: "";
-
+    in-out property <string> source_folder: "";
+    in-out property <string> destination_folder: "";
+    in-out property <bool> change: false ;
 
     callback quit_button_clicked();
     callback save_button_clicked();
     callback add_file_formats();
-
-
+    callback select_source_folder_clicked();
+    callback select_destination_folder_clicked();
+    callback folder_selected();
 
     VerticalBox {
 
@@ -30,92 +33,99 @@ export component AppWindow inherits Window {
                HorizontalLayout {
                     colspan: 3;
                     LineEdit {
-                               input-type: password;
-                                horizontal_stretch: 1;
+                        input-type: text;
+                        text: source_folder;
+                        horizontal-stretch: 1;
+                        read-only: true;
                     }
-                    /*
-                    le_manifest := LineEdit {
-                                    enabled: !root.deptree-pane-visible;
-                                    accepted => { root.reload-manifest(le_manifest.text); }
-                                    horizontal_stretch: 1;
-                                }
-                    */
+
                     Button {
-                         text: "📂";
-                           // clicked => { root.show-open-dialog(); }
-                            clicked => {  }
+                        text: "📂";
+                        clicked => { select_source_folder_clicked() }
                     }
-
-
                }
             }
             Row{
                 Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: left; }
-                               HorizontalLayout {
-                                    colspan: 3;
-                                    LineEdit {
-                                                input-type: password;
-                                                horizontal_stretch: 1;
-                                    }
-                                    /*
-                                    le_manifest := LineEdit {
-                                                    enabled: !root.deptree-pane-visible;
-                                                    accepted => { root.reload-manifest(le_manifest.text); }
-                                                    horizontal_stretch: 1;
-                                                }
-                                    */
-                                    Button {
-                                         text: "📂";
-                                           // clicked => { root.show-open-dialog(); }
-                                            clicked => {  }
-                                    }
+                HorizontalLayout {
+                    colspan: 3;
+                    LineEdit {
+                        input-type: text;
+                        text: destination_folder;
+                        horizontal-stretch: 1;
+                        read-only: true;
+                    }
 
-
-                               }
+                    Button {
+                        text: "📂";
+                        clicked => { select_destination_folder_clicked() }
+                    }
+                }
             }
-            Row{
-                        Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
-                        HorizontalLayout {
-                            ComboBox {
-                                model: ["Automatic", "Manual"];
-                                current-value <=> root.selected_backup_mode;
-                                enabled: widgets-enabled;
-                            }
 
-                            LineEdit {
-                                visible: root.selected_backup_mode == "Manual";
-                                placeholder-text: "Type file(es: pdf)";
-                                horizontal_stretch: 1;
-                                text <=> root.file_format_input;
-                            }
-                            Button {
-                                visible: root.selected_backup_mode == "Manual";
-                                text: "➕ Add";
-                                clicked => {
-                                    if (root.file_format_input != "") {
-                                        root.add_file_formats();
-                                        root.file_format_input = "";
-                                    }
-                                }
+            Row{
+                Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
+                HorizontalLayout {
+                    ComboBox {
+                        model: ["Folder", "Single files"];
+                        current-value <=> root.selected_backup_mode;
+                        enabled: widgets-enabled;
+                        selected => { if(root.selected_backup_mode == "Folder"){
+
+                            root.folder_selected();
+                            root.file_formats= [];
+                            formatted_file_formats= "";
+                        }}
+                    }
+
+                    LineEdit {
+                        visible: root.selected_backup_mode == "Single files";
+                        placeholder-text: "Type file (es: pdf)";
+                        horizontal_stretch: 1;
+                        text <=> root.file_format_input;
+
+                    }
+                    Button {
+                        visible: root.selected_backup_mode == "Single files";
+                        text: "➕ Add";
+                        clicked => {
+                            if (root.file_format_input != "") {
+
+                                root.add_file_formats();
+                                root.file_format_input = "";
                             }
                         }
                     }
+                }
+            }
             Row {
                 Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; }
-
+                HorizontalLayout {
+                    horizontal-stretch: 1;
+                    Text {
+                        text: formatted_file_formats;
+                        font-size: 14px;
+                    }
+                    HorizontalLayout { // Contenitore aggiuntivo per allineare a destra
+                                             // Allinea il contenuto a destra
+                                            Button {
+                                                visible: root.selected_backup_mode == "Single files";
+                                                text: "🗑️ Delete";
+                                                width: 100px; // Imposta la larghezza del pulsante
+                                                clicked => {
+                                                    root.folder_selected();
+                                                    root.file_formats= [];
+                                                    formatted_file_formats= "";
+                                                }
+                                            }
+                                        }
+                }
             }
-
-
-
-
-
-            }
+        }
 
         padding-top: 46px /* header line height in design */
                              + /* extra top-padding in design */ 27px;
         spacing: 24px;
-
-
 
         HorizontalBox {
                 alignment: space_between;

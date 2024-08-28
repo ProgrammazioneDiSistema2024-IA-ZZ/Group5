@@ -8,7 +8,7 @@ use auto_launch::{AutoLaunchBuilder};
 use std::fs::{File, read_to_string};
 use std::io::Write;
 use std::path::Path;
-use std::process::exit;
+use std::process::{exit, Command};
 use std::rc::Rc;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
@@ -22,7 +22,8 @@ use cpu_time::ProcessTime;
 use fs_extra::dir::get_size;
 use glob::glob;
 use rdev::{display_size};
-use slint::{ModelRc, SharedString};
+use slint::{ SharedString};
+use rfd::FileDialog;
 
 enum MainThreadMessage {
     ShowErrorMessage,
@@ -48,7 +49,11 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     let confirm_mess = ConfirmMessage::new().unwrap();
     let backup_compl_mess = BackupCompletedMessage::new().unwrap();
     let backup_err_mess = BackupErrorMessage::new().unwrap();
+
     let file_formats: Rc<RefCell<Vec<String>>> = Rc::new(RefCell::new(Vec::new())); //Dichiaro file_formats come Rc così che possa essere condiviso tra più closure
+    let path_source=  Rc::new(RefCell::new(String::new()));
+    let path_destination=  Rc::new(RefCell::new(String::new()));
+
 
     let (tx, rx) = mpsc::channel();
     let (tx_close, rx_close) = mpsc::channel();
@@ -96,27 +101,88 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
                 if !new_format.is_empty() && !file_formats.borrow().contains(&new_format) {
                     file_formats.borrow_mut().push(new_format.clone());
 
-                    // Converti Vec<String> in Vec<SharedString>
-                    let shared_formats: Vec<SharedString> = file_formats.borrow().iter().map(SharedString::from).collect();
+                    let formats = convert_file_formats(file_formats.borrow());
+
+                    ui.set_formatted_file_formats(SharedString::from(formats));
                 }
             }
         }
     });
 
+    ui.on_select_source_folder_clicked( {
+        let ui_handle = ui.as_weak();
+        let path_source = Rc::clone(&path_source);
+        move || {
+            if let Some(folder_path) = FileDialog::new().pick_folder() {
+                if let Some(ui) = ui_handle.upgrade() {
+                    ui.set_source_folder(SharedString::from(folder_path.display().to_string()));
+                    *path_source.borrow_mut() = folder_path.display().to_string();                }
+            }
+        }
+    });
 
+    ui.on_select_destination_folder_clicked( {
+        let ui_handle = ui.as_weak();
+        let path_destination = Rc::clone(&path_destination);
+        move || {
+            if let Some(folder_path) = FileDialog::new().pick_folder() {
+                if let Some(ui) = ui_handle.upgrade() {
+                    ui.set_destination_folder(SharedString::from(folder_path.display().to_string()));
+                    *path_destination.borrow_mut() = folder_path.display().to_string();
+                }
+            }
+        }
+    });
+    ui.on_folder_selected({
+        let ui_handle = ui.as_weak();
+        let file_formats = Rc::clone(&file_formats);    //Creo un riferimento a file_formats. In questo modo, posso modificarlo all'interno della closure subito sotto e averlo disponibile anche nella closure di on_save_button_clicked
+
+        move || {
+            if let Some(ui) = ui_handle.upgrade() {
+                // Resetta file_formats e aggiorna l'interfaccia utente
+
+
+                file_formats.borrow_mut().clear();
+                ui.set_formatted_file_formats(SharedString::from("")); // Pulire la visualizzazione dei formati
+            }
+        }
+    });
 
     ui.on_save_button_clicked({
         let ui_handle3 = ui.as_weak();
+        let file_formats = Rc::clone(&file_formats);
+        let path_source = Rc::clone(&path_source);
+        let path_destination = Rc::clone(&path_destination);
         move || {
             if let Some(ui) = ui_handle3.upgrade() { // la necessità di fare l'upgrade era necessria per aver
                 // il diritto di deallocare  uno spazio di memoria
-                ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
-                let formats = convert_file_formats(file_formats.borrow());
-                println!("{}", formats);
-               // inizio_backup();
-                start_backup(tx.clone(), tx_close.clone());
+
+
+                //salvo le stringhe del file ,path sorgente e path destinazione
+                let mut formats = file_formats.borrow().join(",");
+                let source = path_source.borrow().clone();
+                let destination = path_destination.borrow().clone();
+
+                // se un
+                //if( !formats.is_empty() && !source.is_empty()&& !destination.is_empty()) {
+                if !source.is_empty()&& !destination.is_empty() {
+
+                    if formats.is_empty() {
+                        formats = "F".to_string();
+                    }
+                        ui.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
+
+
+                    if let Err(e) = create_file_configuration(formats, source, destination) {
+                        eprintln!("Error creating configuration file: {}", e);
+                    } else {
+                        start_backup(tx.clone(), tx_close.clone());
+                    }
+                }
+
             }
         }
+
     });
     ui.on_quit_button_clicked({
         let ui_handle3 = ui.as_weak();
@@ -127,7 +193,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             }
         }
     });
-
 
     //Gestisco gli eventi delle GUI
     err_mess.on_exit_button_clicked({
@@ -187,22 +252,22 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }).unwrap();
     });
 
-    let res = ui.run();
+    let _ = ui.run();
 
     loop {
         if let Ok(msg) = rx.recv() {
             match msg {
                 MainThreadMessage::ShowErrorMessage => {
-                    err_mess.run();
+                    let _ = err_mess.run();
                 }
                 MainThreadMessage::ShowConfirmMessage => {
-                    confirm_mess.run();
+                    let _ = confirm_mess.run();
                 }
                 MainThreadMessage::ShowBackupCompleteMessage => {
-                    backup_compl_mess.run();
+                    let _ = backup_compl_mess.run();
                 }
                 MainThreadMessage::ShowBackupErrorMessage => {
-                    backup_err_mess.run();
+                    let _ = backup_err_mess.run();
                 }
             }
         }
@@ -222,6 +287,22 @@ fn convert_file_formats(file_formats: Ref<Vec<String>>) -> String {
         }
     }
     formats
+}
+
+fn create_file_configuration(file_formats: String, path_source: String, path_destination: String) -> io::Result<()> {
+    let configuration_file = "configuration.txt";
+    let mut file = File::create(configuration_file)?;
+
+
+
+    // Scrivere l'intestazione
+    writeln!(file, "type;source;destination")?;
+
+    // Scrivere i dati nel file
+    writeln!(file, "{};{};{}", file_formats, path_source, path_destination)?;
+
+    println!("Configuration file written successfully.");
+    Ok(())
 }
 
 
