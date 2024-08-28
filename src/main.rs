@@ -76,6 +76,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             .expect("Failed to hide terminal");
     }
 
+    //Leggo il file di configurazione. Se è presente, carico i dati nella GUI, altrimenti inizializzo la GUI vuota
     let content: Vec<String>;
     if Path::new("configuration.txt").exists() {
         content = read_to_string("configuration.txt").unwrap().lines().map(String::from).collect();
@@ -114,6 +115,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     }
 
     //Gestione dei callback
+    //ui
     ui.on_add_file_formats({
         let ui_handle = ui.as_weak();
         let file_formats = Rc::clone(&file_formats);    //Creo un riferimento a file_formats. In questo modo, posso modificarlo all'interno della closure subito sotto e averlo disponibile anche nella closure di on_save_button_clicked
@@ -176,15 +178,12 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
             if let Some(ui) = ui_handle3.upgrade() { // la necessità di fare l'upgrade era necessria per aver
                 // il diritto di deallocare  uno spazio di memoria
 
-
-                //salvo le stringhe del file ,path sorgente e path destinazione
+                //salvo le stringhe del file, path sorgente e path destinazione
                 let mut formats = file_formats.borrow().join(",");
 
                 let source = ui.get_source_folder().to_string();
                 let destination = ui.get_destination_folder().to_string();
 
-                // se un
-                //if( !formats.is_empty() && !source.is_empty()&& !destination.is_empty()) {
                 if !source.is_empty()&& !destination.is_empty() {
 
                     if formats.is_empty() {
@@ -196,6 +195,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
                     if let Err(e) = create_file_configuration(&formats, &source, &destination) {
                         eprintln!("Error creating configuration file: {}", e);
                     } else {
+                        //Creo questo vettore di stringhe contenente le informazioni di configurazione del backup, che viene passato alla funzione che si occupa di effettuare il backup
                         let options: Vec<String> = Vec::from([formats.to_string(), source.to_string(), destination.to_string()]);
                         backup::start_backup(tx.clone(), tx_close.clone(), options);
                     }
@@ -205,6 +205,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
 
     });
+
     ui.on_quit_button_clicked({
         let ui_handle3 = ui.as_weak();
         move || {
@@ -215,7 +216,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
-    //Gestisco gli eventi delle GUI
+    //confirm_mess
     confirm_mess.on_abort_button_clicked({    //Quando clicco su annulla, in automatico viene annullato il backup, siccome sto inserendo un comando diverso da quello di conferma
         let ui_handle = confirm_mess.as_weak();
         move || {
@@ -225,6 +226,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    //backup_compl_mess
     backup_compl_mess.on_close_button_clicked({
         let ui_handle = backup_compl_mess.as_weak();
         move || {
@@ -234,6 +236,7 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    //backup_err_mess
     backup_err_mess.on_close_button_clicked({
         let ui_handle = backup_err_mess.as_weak();
         move || {
@@ -243,22 +246,28 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    //Thread che, quando riceve un messaggio (rx_close), chiude la finestra di confirm_mess.
+    //Ho bisogno di usare un thread diverso da quello principale siccome, quando una finestra della GUI è aperta, il thread principale è impegnato a gestire la GUI e non riuscirebbe a ricevere il messaggio
     let confirm_mess_weak = confirm_mess.as_weak();
     thread::spawn(move || {
-        rx_close.recv().unwrap();
+        loop {
+            rx_close.recv().unwrap();
 
-        let confirm_mess_weak = confirm_mess_weak.clone();
-        slint::invoke_from_event_loop({
-            move || {
-                if let Some(window) = confirm_mess_weak.upgrade() {
-                    window.hide().expect("Impossibile nascondere la finestra");
+            let confirm_mess_weak = confirm_mess_weak.clone();
+            slint::invoke_from_event_loop({
+                move || {
+                    if let Some(window) = confirm_mess_weak.upgrade() {
+                        window.hide().expect("Impossibile nascondere la finestra");
+                    }
                 }
-            }
-        }).unwrap();
+            }).unwrap();
+        }
     });
 
     let _ = ui.run();
 
+    //Quando la funzione di backup ha bisogno che venga mostrata una GUI, invia un messaggio al thread principale
+    //Il thread principale riceve il messaggio e visualizza la finestra corretta
     loop {
         if let Ok(msg) = rx.recv() {
             match msg {

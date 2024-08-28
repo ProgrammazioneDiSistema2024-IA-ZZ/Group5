@@ -15,6 +15,18 @@ use rodio::source::SineWave;
 use sysinfo::System;
 use crate::MainThreadMessage;
 
+/**
+ * Funzione che rileva se viene disegnato il comando di backup e il relativo comando di conferma
+ * Se questi comandi sono disegnati, effettua il backup
+ * Inoltre, ogni 2 minuti stampa un file di log contenente i consumi di CPU
+ *
+ * @param tx:       invia un messaggio al thread principale chiedendo di aprire una determinata finestra della GUI
+ * @param tx_close: invia un messaggio al thread principale chiedendo di chiudere una finestra della GUI
+ * @param options:  vettore di stringhe contenente le opzioni del backup. Devo usare un vettore di String e non di &str per via del modo in cui Rust gestisce il movimento e il possesso
+ *                  options[0]: contiene il tipo di backup (tutta la cartella o solo singoli file)
+ *                  options[1]: contiene il percorso della cartella sorgente del backup
+ *                  options[2]: contiene il percorso della cartella destinazione del backup
+ */
 pub fn start_backup(tx: Sender<MainThreadMessage>, tx_close: Sender<()>, options: Vec<String>) {
     let device_state = DeviceState::new();
 
@@ -102,16 +114,16 @@ pub fn start_backup(tx: Sender<MainThreadMessage>, tx_close: Sender<()>, options
 
                                 if !sound_played {
                                     //Riproduco un beep per confermare che il comando è stato acquisito correttamente
-                                    play_sound();
-                                    tx.send(MainThreadMessage::ShowConfirmMessage).unwrap();
-
+                                    play_sound(500);
                                     sound_played = true;
+
+                                    tx.send(MainThreadMessage::ShowConfirmMessage).unwrap();
                                 } else {
                                     if is_horizontal(start_position, end_position) && f64::from((end_position.0 - start_position.0).abs()) > 0.9 * w {
                                         //A questo punto, effettuo il backup
 
                                         //Riproduco un suono di conferma anche in questo caso
-                                        play_sound();
+                                        play_sound(500);
 
                                         //Chiudo eventuali finestre aperte
                                         tx_close.send(()).unwrap();
@@ -140,6 +152,10 @@ pub fn start_backup(tx: Sender<MainThreadMessage>, tx_close: Sender<()>, options
                                             }
 
                                             let cpu_time: Duration = start_backup.try_elapsed().expect("Non sono riuscito ad ottenere il tempo del backup");
+
+                                            play_sound(200);
+                                            play_sound(200);
+                                            play_sound(200);
                                             tx.send(MainThreadMessage::ShowBackupCompleteMessage).unwrap();
 
                                             let mut backup_log = File::create(options[2].to_owned() + "/backup_log.txt").unwrap();
@@ -180,16 +196,16 @@ fn is_horizontal(start: (i32, i32), end: (i32, i32)) -> bool {
     start.1 >= end.1-50 && start.1<=end.1+50
 }
 
-fn play_sound() {
+fn play_sound(dur: u64) {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     //Onda a 440 Hz (nota A4) per 500 millisecondi
-    let source = SineWave::new(440.0).take_duration(Duration::from_millis(500));
+    let source = SineWave::new(440.0).take_duration(Duration::from_millis(dur));
     sink.append(source);
 
     //Sleep mentre il suono viene riprodotto
-    thread::sleep(Duration::from_secs(1));
+    thread::sleep(Duration::from_millis(dur * 2));
     sink.sleep_until_end();
 }
 
