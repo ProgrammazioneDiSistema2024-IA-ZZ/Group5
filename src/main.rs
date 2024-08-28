@@ -1,5 +1,5 @@
 //Nasconde la console del terminale in Windows
-//#![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 mod backup;
 
@@ -17,7 +17,6 @@ use slint::{ SharedString};
 use rfd::FileDialog;
 
 enum MainThreadMessage {
-    ShowErrorMessage,
     ShowConfirmMessage,
     ShowBackupCompleteMessage,
     ShowBackupErrorMessage
@@ -36,7 +35,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
 
     //Inizializzo le schermate della GUI di cui ho bisogno
     let ui = AppWindow::new().unwrap();
-    let err_mess = ErrorMessage::new().unwrap();
     let confirm_mess = ConfirmMessage::new().unwrap();
     let backup_compl_mess = BackupCompletedMessage::new().unwrap();
     let backup_err_mess = BackupErrorMessage::new().unwrap();
@@ -198,7 +196,8 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
                     if let Err(e) = create_file_configuration(&formats, &source, &destination) {
                         eprintln!("Error creating configuration file: {}", e);
                     } else {
-                        backup::start_backup(tx.clone(), tx_close.clone());
+                        let options: Vec<String> = Vec::from([formats.to_string(), source.to_string(), destination.to_string()]);
+                        backup::start_backup(tx.clone(), tx_close.clone(), options);
                     }
                 }
 
@@ -217,22 +216,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     });
 
     //Gestisco gli eventi delle GUI
-    err_mess.on_exit_button_clicked({
-        let ui_handle = err_mess.as_weak();
-        move || {
-            if let Some(err_mess) = ui_handle.upgrade() {
-                err_mess.hide().expect("Impossibile nascondere la finestra"); // Nascondi/Chiudi la finestra
-                exit(1);
-            }
-        }
-    });
-
-    err_mess.window().on_close_requested({
-        move || {
-            exit(1);
-        }
-    });
-
     confirm_mess.on_abort_button_clicked({    //Quando clicco su annulla, in automatico viene annullato il backup, siccome sto inserendo un comando diverso da quello di conferma
         let ui_handle = confirm_mess.as_weak();
         move || {
@@ -279,9 +262,6 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
     loop {
         if let Ok(msg) = rx.recv() {
             match msg {
-                MainThreadMessage::ShowErrorMessage => {
-                    let _ = err_mess.run();
-                }
                 MainThreadMessage::ShowConfirmMessage => {
                     let _ = confirm_mess.run();
                 }

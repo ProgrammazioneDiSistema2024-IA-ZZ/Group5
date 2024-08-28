@@ -23,13 +23,15 @@ export component AppWindow inherits Window {
     callback select_source_folder_clicked();
     callback select_destination_folder_clicked();
     callback folder_selected();
+    
+    title: "Group 5";
 
     VerticalBox {
 
         GridLayout {
         spacing: 24px;
             Row{
-               Text { text: "Source Backup:"; vertical-alignment: center ; horizontal-alignment: left; }
+               Text { text: "Source Backup:"; vertical-alignment: center ; horizontal-alignment: left; font-size: 14px; }
                HorizontalLayout {
                     colspan: 3;
                     LineEdit {
@@ -46,7 +48,7 @@ export component AppWindow inherits Window {
                }
             }
             Row{
-                Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: left; }
+                Text { text: "Destination Backup:"; vertical-alignment: center; horizontal-alignment: left; font-size: 14px; }
                 HorizontalLayout {
                     colspan: 3;
                     LineEdit {
@@ -64,7 +66,7 @@ export component AppWindow inherits Window {
             }
 
             Row{
-                Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; }
+                Text { text: "Type Backup:"; vertical-alignment: center; horizontal-alignment: left; font-size: 14px; }
                 HorizontalLayout {
                     ComboBox {
                         model: ["Folder", "Single files"];
@@ -99,7 +101,7 @@ export component AppWindow inherits Window {
                 }
             }
             Row {
-                Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; }
+                Text { text: "Formats File:"; vertical-alignment: center; horizontal-alignment: left; font-size: 14px; }
                 HorizontalLayout {
                     horizontal-stretch: 1;
                     Text {
@@ -107,65 +109,42 @@ export component AppWindow inherits Window {
                         font-size: 14px;
                     }
                     HorizontalLayout { // Contenitore aggiuntivo per allineare a destra
-                                             // Allinea il contenuto a destra
-                                            Button {
-                                                visible: root.selected_backup_mode == "Single files";
-                                                text: "🗑️ Delete";
-                                                width: 100px; // Imposta la larghezza del pulsante
-                                                clicked => {
-                                                    root.folder_selected();
-                                                    root.file_formats= [];
-                                                    formatted_file_formats= "";
-                                                }
-                                            }
-                                        }
+                         // Allinea il contenuto a destra
+                        Button {
+                            visible: root.selected_backup_mode == "Single files";
+                            text: "🗑️ Delete";
+                            width: 100px; // Imposta la larghezza del pulsante
+                            clicked => {
+                                root.folder_selected();
+                                root.file_formats= [];
+                                formatted_file_formats= "";
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        padding-top: 46px /* header line height in design */
-                             + /* extra top-padding in design */ 27px;
+        padding-top: 20px;   /* header line height in design */
+
+        Text {
+            text: "Instructions: to start the backup, draw a rectangle along the edges of the screen.\nThen, to confirm, draw an horizontal line across the screen";
+        }
+
         spacing: 24px;
 
         HorizontalBox {
-                alignment: space_between;
-                Button {
-                    text: "Abort";
-                    clicked => {
-                        root.quit_button_clicked();
-                    }
-                }
-                Button {
-                    text: "Save";
-                    clicked => {
-                        root.save_button_clicked(); // Collegato al nuovo callback
-                    }
-                }
-        }
-
-
-
-    }
-}
-
-export component ErrorMessage inherits Window {
-    callback exit_button_clicked();
-
-    VerticalBox {
-        Text {
-            text: "Error: configuration file was not found or is incorrect. The program will be terminated";
-            font-size: 15px;
-        }
-
-        spacing: 24px;
-
-        HorizontalLayout {
-            alignment: center;
+            alignment: space_between;
             Button {
-                text: "Exit";
-                width: 150px;
+                text: "Abort";
                 clicked => {
-                    root.exit_button_clicked();
+                    root.quit_button_clicked();
+                }
+            }
+            Button {
+                text: "Save";
+                clicked => {
+                    root.save_button_clicked(); // Collegato al nuovo callback
                 }
             }
         }
@@ -174,6 +153,8 @@ export component ErrorMessage inherits Window {
 
 export component ConfirmMessage inherits Window {
     callback abort_button_clicked();
+
+    title: "Group 5";
 
     VerticalBox {
         Text {
@@ -199,6 +180,8 @@ export component ConfirmMessage inherits Window {
 export component BackupCompletedMessage inherits Window {
     callback close_button_clicked();
 
+    title: "Group 5";
+
     VerticalBox {
         Text {
             text: "Backup correctly executed";
@@ -222,6 +205,8 @@ export component BackupCompletedMessage inherits Window {
 
 export component BackupErrorMessage inherits Window {
     callback close_button_clicked();
+
+    title: "Group 5";
 
     VerticalBox {
         Text {
