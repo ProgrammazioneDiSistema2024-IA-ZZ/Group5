@@ -216,6 +216,12 @@ dell'eseguibile corrente e il percorso della directory che lo contiene
         }
     });
 
+    ui.window().on_close_requested({
+        move || {
+            exit(0);
+        }
+    });
+
     //confirm_mess
     confirm_mess.on_abort_button_clicked({    //Quando clicco su annulla, in automatico viene annullato il backup, siccome sto inserendo un comando diverso da quello di conferma
         let ui_handle = confirm_mess.as_weak();
