@@ -1,2 +1,2 @@
 type;source;destination
-png;C:\Users\alega\Desktop\bau;C:\Users\alega\Desktop\ciao
+png;C:\Users\paolo\OneDrive - Politecnico di Torino\POPIPOPI\MAGISTRALE\1 ANNO\Web Applications I\exam-1-Paolino01;D:\Paolo\Desktop\backup
