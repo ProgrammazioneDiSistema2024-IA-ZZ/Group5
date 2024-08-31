@@ -18,14 +18,15 @@ A questo punto, viene eseguito il backup secondo la modalità selezionata in fas
 
 Al termine del backup, vengono emessi tre "bip" consecutivi e l'applicazione ritorna nuovamente in attesa del comando di backup.
 
-L'app è compatibile sia per Windows che per Linux che per MacOS, e funziona sia in modalità chiara che modalità scura (segue le impostazioni del sistema operativo)
-
+L'app funziona sia in modalità chiara che modalità scura (segue le impostazioni del sistema operativo), ed è compatibile sia per Windows che per Linux che per MacOS.
+In proposito, su Windows e Linux, il codice configura e abilita l'avvio automatico dell'applicazione "Group5" all'avvio del sistema operativo.
+Su macOS, oltre a configurare e abilitare l'avvio automatico, il codice esegue uno script per nascondere la finestra del Terminale, migliorando l'esperienza utente rendendo invisibile la finestra del Terminale che potrebbe altrimenti apparire.
 ***
 
-Oltre a queste funzionalità di base, l'applicazione si occupa di scrivere, ogni 2 minuti, il consumo di CPU in un file di log. Inoltre, quando effettua il backup, scrive in un altro file di log nella cartella di destinazione la quantità di byte copiati e il tempo impiegato ad effettuare il backup.
+Oltre a queste funzionalità di base, l'applicazione si occupa di scrivere, ogni 2 minuti, il consumo di CPU in un file di log, `log.txt`. Inoltre, quando effettua il backup, scrive in un altro file di log, `backup_log.txt`, nella cartella di destinazione la quantità di byte copiati e il tempo impiegato ad effettuare il backup.
 
 L'applicazione cerca di ridurre al minimo il suo consumo di CPU. Per ottenere ciò, è stato scelto di usare un singolo thread per effettuare il backup invece di più thread separati. Siccome la copia dei file avviene alla massima velocità consentita dal disco anche quando si utilizza un solo thread, aggiungere altri thread non avrebbe velocizzato la copia, ma, dal momento più thread avrebbero "combattuto" per le stesse risorse sul disco, questo avrebbe rallentato le operazioni.  
-Inoltre, durante la fase di tracciamento del movimento del mouse per riconoscere il comando di backup, sono state inserite delle opportune `sleep` così da non occupare la CPU per più tempo dello stretto necessario
+Inoltre, durante la fase di tracciamento del movimento del mouse per riconoscere il comando di backup, sono state inserite delle opportune `sleep` così da non occupare la CPU per più tempo dello stretto necessario.
 
 ***
 
