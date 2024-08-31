@@ -1,2 +1,2 @@
 type;source;destination
-png;/Users/paolocagliero/Desktop/exam-1-Paolino01;/Users/paolocagliero/Desktop/backup
+png;D:\Paolo\Desktop\Progetti POLI\exam-1-Paolino01;D:\Paolo\Desktop\backup

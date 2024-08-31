@@ -221,7 +221,6 @@ fn copy_files(src: &str, dest: &str, extensions: &[&str]) -> io::Result<()> {
             match entry {
                 Ok(path) => {
                     if path.is_file() {
-                        //TODO: Durante la copia, non viene mantenuto il percorso di cartelle originale, ma i file vengono tutti copiati nella cartella radice -> da discutere: è un bug o una feature?
                         let file_name = path.file_name().unwrap();
                         let dest_path = Path::new(dest).join(file_name);
 

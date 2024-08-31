@@ -42,7 +42,7 @@ export component AppWindow inherits Window {
                     }
 
                     Button {
-                        text: "📁";
+                        icon: @image-url("assets/folder-icon.png");
                         clicked => { select_source_folder_clicked() }
                     }
                }
@@ -59,7 +59,7 @@ export component AppWindow inherits Window {
                     }
 
                     Button {
-                        text: "📁";
+                        icon: @image-url("assets/folder-icon.png");
                         clicked => { select_destination_folder_clicked() }
                     }
                 }
@@ -89,7 +89,8 @@ export component AppWindow inherits Window {
                     }
                     Button {
                         visible: root.selected_backup_mode == "Single files";
-                        text: "➕ Add";
+                        icon: @image-url("assets/plus-icon.png");
+                        text: "Add";
                         clicked => {
                             if (root.file_format_input != "") {
 
@@ -112,7 +113,8 @@ export component AppWindow inherits Window {
                          // Allinea il contenuto a destra
                         Button {
                             visible: root.selected_backup_mode == "Single files";
-                            text: "🗑️ Delete";
+                            icon: @image-url("assets/trash-icon.png");
+                            text: "Delete";
                             width: 100px; // Imposta la larghezza del pulsante
                             clicked => {
                                 root.folder_selected();
