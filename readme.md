@@ -1,32 +1,79 @@
 # Gruppo 5 - Progetto 2.1: Back-up di emergenza
 
-Lo scopo dell'applicazione è quello di permettere di effettuare backup di emergenza nel caso in cui il monitor del PC sia guasto.
+## Introduzione
 
-All'apertura, l'applicazione mostra una schermata di configurazione attraverso la quale è possibile selezionare le cartelle di sorgente e destinazione del backup, oltre che al tipo di backup.  
-È possibile scegliere tra due tipologie di backup:
-- Folder: effettua il backup dell'intera cartella sorgente;
-- Single files: effettua il backup soltanto dei file che corrispondono all'elenco di estensioni fornito. Quando si seleziona questa modalità, viene richiesto all'utente di inserire una o più estensioni di file tramite un apposito campo di testo.
+Questo progetto, sviluppato per il corso di Programmazione di Sistema al Politecnico di Torino, mira a creare un'applicazione di backup di emergenza operativa anche in assenza di un monitor funzionante. L'app è scritta in Rust e utilizza SLint per l'interfaccia grafica (GUI).
 
-Schiacciando su Save, le informazioni inserite vengono salvate in un file di testo, `configuration.txt`, così che le preferenze vengano mantenute al successivo avvio dell'app.  
-La schermata viene chiusa e l'app attende, in background, che venga inserito il comando di backup (il quale consiste nel tracciare un rettangolo lungo i bordi dello schermo, tenendo premuto il tasto sinistro del mouse).
+## Scopo dell'Applicazione
 
-Quando l'applicazione riconosce il corretto inserimento del comando di backup, questa emette un "bip" (così che l'utente abbia un feedback anche in caso il monitor non funzioni) e mostra a schermo una finestra che conferma di aver correttamente inserito il primo comando.  
-Dopodichè, se l'utente vuole effettuare il backup, dovrà inserire il comando di conferma (un "meno" che va da un lato all'altro dello schermo, sempre tenendo premuto il tasto sinistro). Anche in questo caso, viene emesso un "bip" così che l'utente sappia che anche questo comando è stato riconosciuto correttamente.  
-Se invece l'utente non è interessato ad effettuare il backup e ha attivato il comando per sbaglio, può annullare l'operazione tramite l'interfaccia grafica oppure tracciando sullo schermo un qualsiasi altro comando diverso da quello di conferma.  
+L'applicazione consente di effettuare backup di emergenza in situazioni in cui il monitor del PC è guasto. L'utente può avviare e confermare il backup utilizzando movimenti specifici del mouse, garantendo un feedback acustico per confermare le azioni eseguite
 
-A questo punto, viene eseguito il backup secondo la modalità selezionata in fase di configurazione.  
+## Funzionalità
 
-Al termine del backup, vengono emessi tre "bip" consecutivi e l'applicazione ritorna nuovamente in attesa del comando di backup.
+### Configurazione del Backup
 
-L'app funziona sia in modalità chiara che modalità scura (segue le impostazioni del sistema operativo), ed è compatibile sia per Windows che per Linux che per MacOS.  
-Inoltre, si apre in automatico all'accensione del PC. Alla prima esecuzione, il codice configura e abilita l'avvio automatico dell'applicazione "Group5" all'avvio del sistema operativo, occupandosi inoltre di nascondere la finestra del Terminale laddove necessario (nel caso di Windows tramite l'istruzione `#![windows_subsystem = "windows"]`, nel caso di MacOS eseguendo un apposito script), così che non interferisca con le normali operazioni dell'utente.
+Al primo avvio, l'applicazione mostra una schermata di configurazione dove è possibile:
 
-***
+- **Selezionare le Cartelle**:
+  - **Sorgente**: Cartella da cui eseguire il backup.
+  - **Destinazione**: Cartella o unità di destinazione del backup.
 
-Oltre a queste funzionalità di base, l'applicazione si occupa di scrivere, ogni 2 minuti, il consumo di CPU in un file di log, `log.txt`. Inoltre, quando effettua il backup, scrive in un altro file di log, `backup_log.txt`, nella cartella di destinazione la quantità di byte copiati e il tempo impiegato ad effettuare il backup.
+- **Scegliere la Modalità di Backup**:
+  - **Folder**: Effettua il backup dell'intera cartella sorgente.
+  - **Single Files**: Effettua il backup dei file corrispondenti a specifiche estensioni fornite dall'utente attraverso un apposito campo di testo.
 
-L'applicazione cerca di ridurre al minimo il suo consumo di CPU. Per ottenere ciò, è stato scelto di usare un singolo thread per effettuare il backup invece di più thread separati. Siccome la copia dei file avviene alla massima velocità consentita dal disco anche quando si utilizza un solo thread, aggiungere altri thread non avrebbe velocizzato la copia, ma, dal momento più thread avrebbero "combattuto" per le stesse risorse sul disco, questo avrebbe rallentato le operazioni.  
-Inoltre, durante la fase di tracciamento del movimento del mouse per riconoscere il comando di backup, sono state inserite delle opportune `sleep` così da non occupare la CPU per più tempo dello stretto necessario.
+Le informazioni di configurazione vengono salvate in un file di testo (`configuration.txt`), garantendo che le preferenze siano mantenute tra i diversi avvii dell'applicazione.
+
+### Esecuzione del Backup
+
+#### Avvio del Backup
+
+Per avviare il backup, l'utente deve:
+
+1. Tracciare un rettangolo lungo i bordi dello schermo tenendo premuto il tasto sinistro del mouse.
+2. All'inserimento corretto del comando, l'applicazione emette un segnale acustico ("bip") e mostra una finestra di conferma.
+
+#### Conferma del Backup
+
+Per confermare l'esecuzione del backup, l'utente deve:
+
+1. Tracciare un segno di "meno" (-) da un lato all'altro dello schermo.
+2. Anche in questo caso, viene emesso un "bip" per indicare che il comando è stato riconosciuto.
+
+Se l'utente desidera annullare il backup, può farlo tracciando un comando diverso o tramite l'interfaccia grafica.
+
+#### Completamento del Backup
+
+Al termine del backup, l'applicazione:
+
+- Emette tre "bip" consecutivi per indicare che l'operazione è stata completata.
+- Ritorna in attesa di un nuovo comando di backup.
+
+### Modalità di Funzionamento
+
+L'app è compatibile con Windows, Linux e macOS e supporta sia la modalità chiara che scura, adattandosi alle impostazioni del sistema operativo. All'avvio del sistema, l'app "Group5" si avvia automaticamente. Alla prima esecuzione, configura l'avvio automatico e nasconde la finestra del terminale quando necessario: su Windows tramite #![windows_subsystem = "windows"] e su macOS tramite uno script dedicato.
+
+### Logging
+
+L'applicazione registra due tipi di log:
+
+- **Consumo CPU**: Ogni 2 minuti, viene salvato il consumo di CPU dell'applicazione nel file `log.txt`.
+- **Dettagli del Backup**: Al termine di ogni backup, l'applicazione scrive un file `backup_log.txt` nella cartella di destinazione, contenente:
+  - La quantità di byte copiati.
+  - Il tempo impiegato per eseguire il backup.
+ 
+### Ottimizzazione delle Prestazioni
+
+L'applicazione è progettata per minimizzare il consumo di CPU:
+
+- Uso di un Singolo Thread: Utilizza un solo thread per il backup, poiché la copia dei file raggiunge già la massima velocità del disco con un solo thread. L'aggiunta di thread supplementari non accelererebbe il processo e potrebbe rallentare le operazioni a causa della concorrenza per le risorse del disco.
+- Efficienza nei Comandi del Mouse: Durante il riconoscimento dei movimenti del mouse, l'applicazione inserisce delle pause (sleep) per ridurre l'uso non necessario della CPU.
+
+### Autori
+
+- Paolo Cagliero - s324194
+- Luciana Galliani - s331469 
+- Alessandro Garzaro - s315129
 
 ***
 
