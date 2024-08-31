@@ -2,7 +2,7 @@
 
 Lo scopo dell'applicazione è quello di permettere di effettuare backup di emergenza nel caso in cui il monitor del PC sia guasto.
 
-L'applicazione si apre in automatico all'avvio del PC, e mostra una schermata di configurazione attraverso la quale è possibile selezionare le cartelle di sorgente e destinazione del backup, oltre che al tipo di backup.  
+All'apertura, l'applicazione mostra una schermata di configurazione attraverso la quale è possibile selezionare le cartelle di sorgente e destinazione del backup, oltre che al tipo di backup.  
 È possibile scegliere tra due tipologie di backup:
 - Folder: effettua il backup dell'intera cartella sorgente;
 - Single files: effettua il backup soltanto dei file che corrispondono all'elenco di estensioni fornito. Quando si seleziona questa modalità, viene richiesto all'utente di inserire una o più estensioni di file tramite un apposito campo di testo.
@@ -18,9 +18,9 @@ A questo punto, viene eseguito il backup secondo la modalità selezionata in fas
 
 Al termine del backup, vengono emessi tre "bip" consecutivi e l'applicazione ritorna nuovamente in attesa del comando di backup.
 
-L'app funziona sia in modalità chiara che modalità scura (segue le impostazioni del sistema operativo), ed è compatibile sia per Windows che per Linux che per MacOS.
-In proposito, su Windows e Linux, il codice configura e abilita l'avvio automatico dell'applicazione "Group5" all'avvio del sistema operativo.
-Su macOS, oltre a configurare e abilitare l'avvio automatico, il codice esegue uno script per nascondere la finestra del Terminale, migliorando l'esperienza utente rendendo invisibile la finestra del Terminale che potrebbe altrimenti apparire.
+L'app funziona sia in modalità chiara che modalità scura (segue le impostazioni del sistema operativo), ed è compatibile sia per Windows che per Linux che per MacOS.  
+Inoltre, si apre in automatico all'accensione del PC. Alla prima esecuzione, il codice configura e abilita l'avvio automatico dell'applicazione "Group5" all'avvio del sistema operativo, occupandosi inoltre di nascondere la finestra del Terminale laddove necessario (nel caso di Windows tramite l'istruzione `#![windows_subsystem = "windows"]`, nel caso di MacOS eseguendo un apposito script), così che non interferisca con le normali operazioni dell'utente.
+
 ***
 
 Oltre a queste funzionalità di base, l'applicazione si occupa di scrivere, ogni 2 minuti, il consumo di CPU in un file di log, `log.txt`. Inoltre, quando effettua il backup, scrive in un altro file di log, `backup_log.txt`, nella cartella di destinazione la quantità di byte copiati e il tempo impiegato ad effettuare il backup.
