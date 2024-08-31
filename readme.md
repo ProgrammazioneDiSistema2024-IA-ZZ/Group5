@@ -8,28 +8,28 @@ L'applicazione si apre in automatico all'avvio del PC, e mostra una schermata di
 - Single files: effettua il backup soltanto dei file che corrispondono all'elenco di estensioni fornito. Quando si seleziona questa modalità, viene richiesto all'utente di inserire una o più estensioni di file tramite un apposito campo di testo.
 
 Schiacciando su Save, le informazioni inserite vengono salvate in un file di testo, `configuration.txt`, così che le preferenze vengano mantenute al successivo avvio dell'app.  
-La schermata viene chiusa e l'app attende, in background, che venga inserito il comando di backup (il quale consiste nel tracciare un rettangolo lungo i bordi dello schermo).
+La schermata viene chiusa e l'app attende, in background, che venga inserito il comando di backup (il quale consiste nel tracciare un rettangolo lungo i bordi dello schermo, tenendo premuto il tasto sinistro del mouse).
 
 Quando l'applicazione riconosce il corretto inserimento del comando di backup, questa emette un "bip" (così che l'utente abbia un feedback anche in caso il monitor non funzioni) e mostra a schermo una finestra che conferma di aver correttamente inserito il primo comando.  
-Dopodichè, se l'utente vuole effettuare il backup, dovrà inserire il comando di conferma (un "meno" che va da un lato all'altro dello schermo). Anche in questo caso, viene emesso un "bip" così che l'utente sappia che anche questo comando è stato riconosciuto correttamente.  
+Dopodichè, se l'utente vuole effettuare il backup, dovrà inserire il comando di conferma (un "meno" che va da un lato all'altro dello schermo, sempre tenendo premuto il tasto sinistro). Anche in questo caso, viene emesso un "bip" così che l'utente sappia che anche questo comando è stato riconosciuto correttamente.  
 Se invece l'utente non è interessato ad effettuare il backup e ha attivato il comando per sbaglio, può annullare l'operazione tramite l'interfaccia grafica oppure tracciando sullo schermo un qualsiasi altro comando diverso da quello di conferma.  
 
 A questo punto, viene eseguito il backup secondo la modalità selezionata in fase di configurazione.  
 
-Al termine del backup, vengono emessi tre "bip" consecutivi e l'applicazione ritorna in attesa del comando di backup.
+Al termine del backup, vengono emessi tre "bip" consecutivi e l'applicazione ritorna nuovamente in attesa del comando di backup.
 
 L'app è compatibile sia per Windows che per Linux che per MacOS, e funziona sia in modalità chiara che modalità scura (segue le impostazioni del sistema operativo)
 
----
+***
 
-Oltre a queste funzionalità di base, l'applicazione si occupa di scrivere, ogni 2 minuti, il consumo di CPU in un file di log e, quando effettua il backup scrive, in un altro file di log nella cartella di destinazione, la quantità di byte copiati e il tempo impiegato ad effettuare il backup.
+Oltre a queste funzionalità di base, l'applicazione si occupa di scrivere, ogni 2 minuti, il consumo di CPU in un file di log. Inoltre, quando effettua il backup, scrive in un altro file di log nella cartella di destinazione la quantità di byte copiati e il tempo impiegato ad effettuare il backup.
 
-L'applicazione cerca di ridurre al minimo il suo consumo di CPU. Per ottenere ciò, è stato scelto di usare un singolo thread per effettuare il backup invece di più thread separati. Siccome la copia dei file avviene alla massima velocità consentita dal disco anche quando si utilizza un solo thread, aggiungere altri thread non avrebbe velocizzato la copia, ma, dal momento più thread avrebbero "combattuto" per le stesse risorse sul disco, questo avrebbe rallentato le operazioni.
-Inoltre, durante la fase di tracciamento del movimento del mouse per riconoscere il comando di backup sono state inserite delle opportune `sleep` così da non occupare la CPU per più tempo dello stretto necessario
+L'applicazione cerca di ridurre al minimo il suo consumo di CPU. Per ottenere ciò, è stato scelto di usare un singolo thread per effettuare il backup invece di più thread separati. Siccome la copia dei file avviene alla massima velocità consentita dal disco anche quando si utilizza un solo thread, aggiungere altri thread non avrebbe velocizzato la copia, ma, dal momento più thread avrebbero "combattuto" per le stesse risorse sul disco, questo avrebbe rallentato le operazioni.  
+Inoltre, durante la fase di tracciamento del movimento del mouse per riconoscere il comando di backup, sono state inserite delle opportune `sleep` così da non occupare la CPU per più tempo dello stretto necessario
 
----
+***
 
-## Screenshots
+## Screenshot
 
 ### *Schermata di configurazione*  
 
