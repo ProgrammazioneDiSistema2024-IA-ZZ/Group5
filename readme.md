@@ -51,7 +51,7 @@ Al termine del backup, l'applicazione:
 
 ### Modalità di Funzionamento
 
-L'app è compatibile con Windows, Linux e macOS e supporta sia la modalità chiara che scura, adattandosi alle impostazioni del sistema operativo. All'avvio del sistema, l'app "Group5" si avvia automaticamente. Alla prima esecuzione, configura l'avvio automatico e nasconde la finestra del terminale quando necessario: su Windows tramite #![windows_subsystem = "windows"] e su macOS tramite uno script dedicato.
+L'app è compatibile con Windows, Linux e macOS e supporta sia la modalità chiara che scura, adattandosi alle impostazioni del sistema operativo. All'avvio del sistema, l'app "Group5" si avvia automaticamente. Alla prima esecuzione, configura l'avvio automatico e nasconde la finestra del terminale quando necessario: su Windows tramite `#![windows_subsystem = "windows"]` e su macOS tramite uno script dedicato.
 
 ### Logging
 
